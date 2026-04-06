@@ -1,4 +1,7 @@
 package com.project2.library_management.enums;
 
-public class BorrowStatus {
+public enum BorrowStatus {
+    BORROWED,
+    RETURNED,
+    OVERDUE
 }
