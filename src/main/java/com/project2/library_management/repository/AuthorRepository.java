@@ -1,4 +1,7 @@
 package com.project2.library_management.repository;
 
-public class AuthorRepository {
+import com.project2.library_management.entity.Author;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface AuthorRepository extends JpaRepository<Author, Long> {
 }

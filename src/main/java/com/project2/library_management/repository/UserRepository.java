@@ -1,4 +1,6 @@
 package com.project2.library_management.repository;
+import com.project2.library_management.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public class UserRepository {
+public interface UserRepository extends JpaRepository<User, Long> {
 }
