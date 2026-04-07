@@ -1,9 +1,11 @@
 package com.project2.library_management.entity;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
+@JsonPropertyOrder({ "id", "name", "biography", "createdAt" })
 @Table(name = "authors")
 public class Author {
 
@@ -15,10 +17,14 @@ public class Author {
 
     private String biography;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     public Author() {
+    }
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = LocalDateTime.now();
     }
 
     public Long getId() {
