@@ -1,11 +1,13 @@
 package com.project2.library_management.entity;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.project2.library_management.enums.BorrowStatus;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@JsonPropertyOrder({ "id", "user", "book", "borrowDate", "dueDate", "returnDate", "status", "createdAt" })
 @Table(name = "borrow_records")
 public class BorrowRecord {
 
@@ -37,6 +39,13 @@ public class BorrowRecord {
     private LocalDateTime createdAt;
 
     public BorrowRecord() {
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
 
     public Long getId() {

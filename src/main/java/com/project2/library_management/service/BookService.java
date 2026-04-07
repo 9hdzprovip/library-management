@@ -42,7 +42,7 @@ public class BookService {
             if (optionalAuthor.isPresent()) {
                 book.setAuthor(optionalAuthor.get());
             } else {
-                return null;
+                throw new RuntimeException("Không tìm thấy author với id = " + book.getAuthor().getId());
             }
         }
 
@@ -51,7 +51,7 @@ public class BookService {
             if (optionalCategory.isPresent()) {
                 book.setCategory(optionalCategory.get());
             } else {
-                return null;
+                throw new RuntimeException("Không tìm thấy category với id = " + book.getCategory().getId());
             }
         }
 
