@@ -1,11 +1,13 @@
 package com.project2.library_management.entity;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.project2.library_management.enums.UserRole;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 
 @Entity
+@JsonPropertyOrder({ "id", "username", "password", "fullName", "email", "role", "createdAt" })
 @Table(name = "users")
 public class User {
 
