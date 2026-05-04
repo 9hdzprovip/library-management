@@ -14,7 +14,7 @@ public class Author {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Author name must not be empty")
+    @NotBlank(message = "Tên tác giả không được để trống")
     private String name;
 
     private String biography;

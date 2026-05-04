@@ -24,7 +24,7 @@ public class CategoryService {
     public Category getCategoryById(Long id) {
         // Do not return null when record is missing.
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Category not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + id));
     }
 
     public Category createCategory(Category category) {
@@ -33,7 +33,7 @@ public class CategoryService {
 
     public Category updateCategory(Long id, Category newCategory) {
         Category oldCategory = categoryRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Category not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + id));
         boolean isChanged = false;
 
         // Update only if the new value is provided and different.
@@ -50,12 +50,10 @@ public class CategoryService {
         return isChanged ? categoryRepository.save(oldCategory) : oldCategory;
     }
 
-    public String deleteCategory(Long id) {
+    public void deleteCategory(Long id) {
         if (!categoryRepository.existsById(id)) {
-            return "Khong tim thay category";
+            throw new NoSuchElementException("Không tìm thấy thể loại với id = " + id);
         }
-
         categoryRepository.deleteById(id);
-        return "Xoa category thanh cong";
     }
 }

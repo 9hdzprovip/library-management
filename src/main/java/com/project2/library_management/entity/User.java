@@ -19,21 +19,21 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Username must not be empty")
+    @NotBlank(message = "Tên người dùng không được để trống")
     private String username;
 
-    @NotBlank(message = "Password must not be empty")
+    @NotBlank(message = "Mật khẩu không được để trống")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
-    @NotBlank(message = "Full name must not be empty")
+    @NotBlank(message = "Họ tên không được để trống")
     @Column(name = "full_name")
     private String fullName;
 
-    @Email(message = "Email must be valid")
+    @Email(message = "Email không đúng định dạng")
     private String email;
 
-    @NotNull(message = "Role must not be null")
+    @NotNull(message = "Vai trò không được để trống")
     @Enumerated(EnumType.STRING)
     private UserRole role;
 

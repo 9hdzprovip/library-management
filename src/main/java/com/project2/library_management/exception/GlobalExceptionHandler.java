@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
         String message = exception.getBindingResult().getFieldErrors().stream()
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .reduce((e1, e2) -> e1 + ", " + e2)
-                .orElse("Validation failed");
+                .orElse("Dữ liệu không hợp lệ");
         return buildErrorResponse(HttpStatus.BAD_REQUEST, message);
     }
 

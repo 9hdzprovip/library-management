@@ -18,7 +18,7 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Title must not be empty")
+    @NotBlank(message = "Tiêu đề sách không được để trống")
     private String title;
 
     private String description;
@@ -28,19 +28,19 @@ public class Book {
     @Column(name = "publish_year")
     private Integer publishYear;
 
-    @Min(value = 0, message = "Quantity must be >= 0")
+    @Min(value = 0, message = "Số lượng sách phải >= 0")
     private Integer quantity;
 
-    @Min(value = 0, message = "Available quantity must be >= 0")
+    @Min(value = 0, message = "Số lượng sách còn lại phải >= 0")
     @Column(name = "available_quantity")
     private Integer availableQuantity;
 
-    @NotNull(message = "Author must not be null")
+    @NotNull(message = "Tác giả không được để trống")
     @ManyToOne
     @JoinColumn(name = "author_id")
     private Author author;
 
-    @NotNull(message = "Category must not be null")
+    @NotNull(message = "Thể loại không được để trống")
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;

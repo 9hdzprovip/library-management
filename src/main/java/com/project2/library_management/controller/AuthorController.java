@@ -1,5 +1,6 @@
 package com.project2.library_management.controller;
 
+import com.project2.library_management.dto.response.MessageResponse;
 import com.project2.library_management.entity.Author;
 import com.project2.library_management.service.AuthorService;
 import jakarta.validation.Valid;
@@ -7,9 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/authors")
@@ -42,11 +41,8 @@ public class AuthorController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteAuthor(@PathVariable Long id) {
+    public ResponseEntity<MessageResponse> deleteAuthor(@PathVariable Long id) {
         authorService.deleteAuthor(id);
-
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Delete author successfully");
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new MessageResponse("Xóa tác giả thành công"));
     }
 }

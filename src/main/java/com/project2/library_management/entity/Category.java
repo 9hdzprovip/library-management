@@ -15,7 +15,7 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Category name must not be empty")
+    @NotBlank(message = "Tên thể loại không được để trống")
     private String name;
 
     private String description;

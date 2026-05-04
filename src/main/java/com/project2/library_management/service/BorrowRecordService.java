@@ -38,7 +38,7 @@ public class BorrowRecordService {
     public BorrowRecord getBorrowRecordById(Long id) {
         // Do not return null when record is missing.
         return borrowRecordRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Borrow record not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
     }
 
     @Transactional
@@ -57,17 +57,17 @@ public class BorrowRecordService {
 
         LocalDate today = LocalDate.now();
         if (request.getDueDate().isBefore(today)) {
-            throw new IllegalArgumentException("Due date must be after or equal to borrow date");
+            throw new IllegalArgumentException("Ngày hẹn trả không được trước ngày mượn");
         }
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NoSuchElementException("User not found with id = " + request.getUserId()));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + request.getUserId()));
 
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new NoSuchElementException("Book not found with id = " + request.getBookId()));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + request.getBookId()));
 
         if (book.getAvailableQuantity() == null || book.getAvailableQuantity() <= 0) {
-            throw new IllegalArgumentException("Book is out of stock, cannot borrow");
+            throw new IllegalArgumentException("Sách hiện không còn bản nào để mượn");
         }
 
         book.setAvailableQuantity(book.getAvailableQuantity() - 1);
@@ -87,10 +87,10 @@ public class BorrowRecordService {
     @Transactional
     public BorrowRecord returnBook(Long id) {
         BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Borrow record not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
 
         if (borrowRecord.getStatus() == BorrowStatus.RETURNED) {
-            throw new IllegalArgumentException("Borrow record was already returned");
+            throw new IllegalArgumentException("Phiếu mượn này đã được trả trước đó");
         }
 
         Book book = borrowRecord.getBook();
@@ -106,7 +106,7 @@ public class BorrowRecordService {
         }
 
         if (bookQuantity != null && currentAvailableQuantity >= bookQuantity) {
-            throw new IllegalArgumentException("Available quantity cannot be greater than book quantity");
+            throw new IllegalArgumentException("Số lượng sách còn lại không được lớn hơn tổng số lượng sách");
         }
 
         book.setAvailableQuantity(currentAvailableQuantity + 1);
@@ -140,7 +140,7 @@ public class BorrowRecordService {
 
     public BorrowRecord updateBorrowRecord(Long id, BorrowRecord newBorrowRecord) {
         BorrowRecord oldBorrowRecord = borrowRecordRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Borrow record not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
         boolean isChanged = false;
 
         // Update only if the new value is provided and different.
@@ -173,7 +173,7 @@ public class BorrowRecordService {
             Long newUserId = newBorrowRecord.getUser().getId();
             if (!Objects.equals(oldUserId, newUserId)) {
                 User user = userRepository.findById(newUserId)
-                        .orElseThrow(() -> new NoSuchElementException("User not found with id = " + newUserId));
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + newUserId));
                 oldBorrowRecord.setUser(user);
                 isChanged = true;
             }
@@ -188,7 +188,7 @@ public class BorrowRecordService {
             Long newBookId = newBorrowRecord.getBook().getId();
             if (!Objects.equals(oldBookId, newBookId)) {
                 Book book = bookRepository.findById(newBookId)
-                        .orElseThrow(() -> new NoSuchElementException("Book not found with id = " + newBookId));
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + newBookId));
                 oldBorrowRecord.setBook(book);
                 isChanged = true;
             }
@@ -197,18 +197,16 @@ public class BorrowRecordService {
         return isChanged ? borrowRecordRepository.save(oldBorrowRecord) : oldBorrowRecord;
     }
 
-    public String deleteBorrowRecord(Long id) {
+    public void deleteBorrowRecord(Long id) {
         if (!borrowRecordRepository.existsById(id)) {
-            return "Khong tim thay borrow record";
+            throw new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id);
         }
-
         borrowRecordRepository.deleteById(id);
-        return "Xoa borrow record thanh cong";
     }
 
     public List<BorrowRecord> getBorrowRecordsByUserId(Long userId) {
         userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("User not found with id = " + userId));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + userId));
         return borrowRecordRepository.findByUserId(userId);
     }
 
@@ -217,7 +215,7 @@ public class BorrowRecordService {
         try {
             status = BorrowStatus.valueOf(statusStr.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid status: " + statusStr + ". Valid values are: BORROWED, RETURNED, OVERDUE");
+            throw new IllegalArgumentException("Trạng thái không hợp lệ: " + statusStr + ". Giá trị hợp lệ: BORROWED, RETURNED, OVERDUE");
         }
         return borrowRecordRepository.findByStatus(status);
     }

@@ -24,7 +24,7 @@ public class UserService {
     public User getUserById(Long id) {
         // Do not return null when record is missing.
         return userRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("User not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + id));
     }
 
     public User createUser(User user) {
@@ -33,7 +33,7 @@ public class UserService {
 
     public User updateUser(Long id, User newUser) {
         User oldUser = userRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("User not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + id));
         boolean isChanged = false;
 
         // Update only if the new value is provided and different.
@@ -65,12 +65,10 @@ public class UserService {
         return isChanged ? userRepository.save(oldUser) : oldUser;
     }
 
-    public String deleteUser(Long id) {
+    public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            return "Khong tim thay user";
+            throw new NoSuchElementException("Không tìm thấy người dùng với id = " + id);
         }
-
         userRepository.deleteById(id);
-        return "Xoa user thanh cong";
     }
 }

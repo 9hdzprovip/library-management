@@ -24,7 +24,7 @@ public class AuthorService {
     public Author getAuthorById(Long id) {
         // Do not return null when record is missing.
         return authorRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Author not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + id));
     }
 
     public Author createAuthor(Author author) {
@@ -33,7 +33,7 @@ public class AuthorService {
 
     public Author updateAuthor(Long id, Author newAuthor) {
         Author oldAuthor = authorRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Author not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + id));
         boolean isChanged = false;
 
         // Update only if the new value is provided and different.
@@ -50,12 +50,10 @@ public class AuthorService {
         return isChanged ? authorRepository.save(oldAuthor) : oldAuthor;
     }
 
-    public String deleteAuthor(Long id) {
+    public void deleteAuthor(Long id) {
         if (!authorRepository.existsById(id)) {
-            return "Khong tim thay author";
+            throw new NoSuchElementException("Không tìm thấy tác giả với id = " + id);
         }
-
         authorRepository.deleteById(id);
-        return "Xoa author thanh cong";
     }
 }

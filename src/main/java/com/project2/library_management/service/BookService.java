@@ -34,7 +34,7 @@ public class BookService {
     public Book getBookById(Long id) {
         // Do not return null when record is missing.
         return bookRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Book not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + id));
     }
 
     public Book createBook(Book book) {
@@ -44,7 +44,7 @@ public class BookService {
             }
             // Resolve relation by id and fail clearly if not found.
             Author author = authorRepository.findById(book.getAuthor().getId())
-                    .orElseThrow(() -> new NoSuchElementException("Author not found with id = " + book.getAuthor().getId()));
+                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + book.getAuthor().getId()));
             book.setAuthor(author);
         }
 
@@ -54,7 +54,7 @@ public class BookService {
             }
             // Resolve relation by id and fail clearly if not found.
             Category category = categoryRepository.findById(book.getCategory().getId())
-                    .orElseThrow(() -> new NoSuchElementException("Category not found with id = " + book.getCategory().getId()));
+                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + book.getCategory().getId()));
             book.setCategory(category);
         }
 
@@ -63,7 +63,7 @@ public class BookService {
 
     public Book updateBook(Long id, Book newBook) {
         Book oldBook = bookRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Book not found with id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + id));
         boolean isChanged = false;
 
         // Update only if the new value is provided and different.
@@ -106,7 +106,7 @@ public class BookService {
             Long newAuthorId = newBook.getAuthor().getId();
             if (!Objects.equals(oldAuthorId, newAuthorId)) {
                 Author author = authorRepository.findById(newAuthorId)
-                        .orElseThrow(() -> new NoSuchElementException("Author not found with id = " + newAuthorId));
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + newAuthorId));
                 oldBook.setAuthor(author);
                 isChanged = true;
             }
@@ -121,7 +121,7 @@ public class BookService {
             Long newCategoryId = newBook.getCategory().getId();
             if (!Objects.equals(oldCategoryId, newCategoryId)) {
                 Category category = categoryRepository.findById(newCategoryId)
-                        .orElseThrow(() -> new NoSuchElementException("Category not found with id = " + newCategoryId));
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + newCategoryId));
                 oldBook.setCategory(category);
                 isChanged = true;
             }
@@ -130,13 +130,11 @@ public class BookService {
         return isChanged ? bookRepository.save(oldBook) : oldBook;
     }
 
-    public String deleteBook(Long id) {
+    public void deleteBook(Long id) {
         if (!bookRepository.existsById(id)) {
-            return "Khong tim thay book";
+            throw new NoSuchElementException("Không tìm thấy sách với id = " + id);
         }
-
         bookRepository.deleteById(id);
-        return "Xoa book thanh cong";
     }
 
     public List<Book> searchBooksByTitle(String title) {
@@ -148,13 +146,13 @@ public class BookService {
 
     public List<Book> getBooksByAuthorId(Long authorId) {
         authorRepository.findById(authorId)
-                .orElseThrow(() -> new NoSuchElementException("Author not found with id = " + authorId));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + authorId));
         return bookRepository.findByAuthorId(authorId);
     }
 
     public List<Book> getBooksByCategoryId(Long categoryId) {
         categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NoSuchElementException("Category not found with id = " + categoryId));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + categoryId));
         return bookRepository.findByCategoryId(categoryId);
     }
 }

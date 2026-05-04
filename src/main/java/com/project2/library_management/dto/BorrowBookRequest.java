@@ -5,13 +5,13 @@ import java.time.LocalDate;
 
 public class BorrowBookRequest {
 
-    @NotNull(message = "User id must not be null")
+    @NotNull(message = "ID người dùng không được để trống")
     private Long userId;
 
-    @NotNull(message = "Book id must not be null")
+    @NotNull(message = "ID sách không được để trống")
     private Long bookId;
 
-    @NotNull(message = "Due date must not be null")
+    @NotNull(message = "Ngày hẹn trả không được để trống")
     private LocalDate dueDate;
 
     public BorrowBookRequest() {
