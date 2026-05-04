@@ -1,13 +1,17 @@
 package com.project2.library_management.service;
 
+import com.project2.library_management.dto.BorrowBookRequest;
 import com.project2.library_management.entity.Book;
 import com.project2.library_management.entity.BorrowRecord;
 import com.project2.library_management.entity.User;
+import com.project2.library_management.enums.BorrowStatus;
 import com.project2.library_management.repository.BookRepository;
 import com.project2.library_management.repository.BorrowRecordRepository;
 import com.project2.library_management.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -37,26 +41,40 @@ public class BorrowRecordService {
                 .orElseThrow(() -> new NoSuchElementException("Borrow record not found with id = " + id));
     }
 
-    public BorrowRecord createBorrowRecord(BorrowRecord borrowRecord) {
-        if (borrowRecord.getUser() != null) {
-            if (borrowRecord.getUser().getId() == null) {
-                throw new IllegalArgumentException("User id must not be null");
-            }
-            // Resolve relation by id and fail clearly if not found.
-            User user = userRepository.findById(borrowRecord.getUser().getId())
-                    .orElseThrow(() -> new NoSuchElementException("User not found with id = " + borrowRecord.getUser().getId()));
-            borrowRecord.setUser(user);
+    @Transactional
+    public BorrowRecord borrowBook(BorrowBookRequest request) {
+        if (request.getUserId() == null) {
+            throw new IllegalArgumentException("User id must not be null");
         }
 
-        if (borrowRecord.getBook() != null) {
-            if (borrowRecord.getBook().getId() == null) {
-                throw new IllegalArgumentException("Book id must not be null");
-            }
-            // Resolve relation by id and fail clearly if not found.
-            Book book = bookRepository.findById(borrowRecord.getBook().getId())
-                    .orElseThrow(() -> new NoSuchElementException("Book not found with id = " + borrowRecord.getBook().getId()));
-            borrowRecord.setBook(book);
+        if (request.getBookId() == null) {
+            throw new IllegalArgumentException("Book id must not be null");
         }
+
+        if (request.getDueDate() == null) {
+            throw new IllegalArgumentException("Due date must not be null");
+        }
+
+        User user = userRepository.findById(request.getUserId())
+                .orElseThrow(() -> new NoSuchElementException("User not found with id = " + request.getUserId()));
+
+        Book book = bookRepository.findById(request.getBookId())
+                .orElseThrow(() -> new NoSuchElementException("Book not found with id = " + request.getBookId()));
+
+        if (book.getAvailableQuantity() == null || book.getAvailableQuantity() <= 0) {
+            throw new IllegalArgumentException("Book is out of stock, cannot borrow");
+        }
+
+        book.setAvailableQuantity(book.getAvailableQuantity() - 1);
+        bookRepository.save(book);
+
+        BorrowRecord borrowRecord = new BorrowRecord();
+        borrowRecord.setUser(user);
+        borrowRecord.setBook(book);
+        borrowRecord.setBorrowDate(LocalDate.now());
+        borrowRecord.setDueDate(request.getDueDate());
+        borrowRecord.setReturnDate(null);
+        borrowRecord.setStatus(BorrowStatus.BORROWED);
 
         return borrowRecordRepository.save(borrowRecord);
     }

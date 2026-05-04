@@ -1,5 +1,6 @@
 package com.project2.library_management.controller;
 
+import com.project2.library_management.dto.BorrowBookRequest;
 import com.project2.library_management.entity.BorrowRecord;
 import com.project2.library_management.service.BorrowRecordService;
 import org.springframework.http.HttpStatus;
@@ -30,9 +31,9 @@ public class BorrowRecordController {
 		return ResponseEntity.ok(borrowRecordService.getBorrowRecordById(id));
 	}
 
-	@PostMapping
-	public ResponseEntity<BorrowRecord> createBorrowRecord(@RequestBody BorrowRecord borrowRecord) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(borrowRecordService.createBorrowRecord(borrowRecord));
+	@PostMapping("/borrow")
+	public ResponseEntity<BorrowRecord> borrowBook(@RequestBody BorrowBookRequest request) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(borrowRecordService.borrowBook(request));
 	}
 
 	@PutMapping("/{id}")
