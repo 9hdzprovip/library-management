@@ -2,9 +2,13 @@ package com.project2.library_management.controller;
 
 import com.project2.library_management.entity.BorrowRecord;
 import com.project2.library_management.service.BorrowRecordService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/borrow-records")
@@ -17,27 +21,31 @@ public class BorrowRecordController {
 	}
 
 	@GetMapping
-	public List<BorrowRecord> getAllBorrowRecords() {
-		return borrowRecordService.getAllBorrowRecords();
+	public ResponseEntity<List<BorrowRecord>> getAllBorrowRecords() {
+		return ResponseEntity.ok(borrowRecordService.getAllBorrowRecords());
 	}
 
 	@GetMapping("/{id}")
-	public BorrowRecord getBorrowRecordById(@PathVariable Long id) {
-		return borrowRecordService.getBorrowRecordById(id);
+	public ResponseEntity<BorrowRecord> getBorrowRecordById(@PathVariable Long id) {
+		return ResponseEntity.ok(borrowRecordService.getBorrowRecordById(id));
 	}
 
 	@PostMapping
-	public BorrowRecord createBorrowRecord(@RequestBody BorrowRecord borrowRecord) {
-		return borrowRecordService.createBorrowRecord(borrowRecord);
+	public ResponseEntity<BorrowRecord> createBorrowRecord(@RequestBody BorrowRecord borrowRecord) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(borrowRecordService.createBorrowRecord(borrowRecord));
 	}
 
 	@PutMapping("/{id}")
-	public BorrowRecord updateBorrowRecord(@PathVariable Long id, @RequestBody BorrowRecord borrowRecord) {
-		return borrowRecordService.updateBorrowRecord(id, borrowRecord);
+	public ResponseEntity<BorrowRecord> updateBorrowRecord(@PathVariable Long id, @RequestBody BorrowRecord borrowRecord) {
+		return ResponseEntity.ok(borrowRecordService.updateBorrowRecord(id, borrowRecord));
 	}
 
 	@DeleteMapping("/{id}")
-	public String deleteBorrowRecord(@PathVariable Long id) {
-		return borrowRecordService.deleteBorrowRecord(id);
+	public ResponseEntity<Map<String, String>> deleteBorrowRecord(@PathVariable Long id) {
+		borrowRecordService.deleteBorrowRecord(id);
+
+		Map<String, String> response = new HashMap<>();
+		response.put("message", "Delete borrow record successfully");
+		return ResponseEntity.ok(response);
 	}
 }

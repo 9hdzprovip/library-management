@@ -2,17 +2,17 @@ package com.project2.library_management.service;
 
 import com.project2.library_management.entity.Category;
 import com.project2.library_management.repository.CategoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
+
     public CategoryService(CategoryRepository categoryRepository) {
         this.categoryRepository = categoryRepository;
     }
@@ -22,8 +22,9 @@ public class CategoryService {
     }
 
     public Category getCategoryById(Long id) {
-        Optional<Category> optionalCategory = categoryRepository.findById(id);
-        return optionalCategory.orElse(null);
+        // Do not return null when record is missing.
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Category not found with id = " + id));
     }
 
     public Category createCategory(Category category) {
@@ -31,41 +32,30 @@ public class CategoryService {
     }
 
     public Category updateCategory(Long id, Category newCategory) {
-        Optional<Category> optionalCategory = categoryRepository.findById(id);
+        Category oldCategory = categoryRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Category not found with id = " + id));
+        boolean isChanged = false;
 
-        if (optionalCategory.isPresent()) {
-            Category oldCategory = optionalCategory.get();
-            boolean isChanged = false;
-
-            if (!Objects.equals(oldCategory.getName(), newCategory.getName())) {
-                oldCategory.setName(newCategory.getName());
-                isChanged = true;
-            }
-
-            if (!Objects.equals(oldCategory.getDescription(), newCategory.getDescription())) {
-                oldCategory.setDescription(newCategory.getDescription());
-                isChanged = true;
-            }
-
-            if (isChanged) {
-                return categoryRepository.save(oldCategory);
-            } else {
-                System.out.println("Không có gì thay đổi");
-                return oldCategory;
-            }
+        // Update only if the new value is provided and different.
+        if (newCategory.getName() != null && !Objects.equals(oldCategory.getName(), newCategory.getName())) {
+            oldCategory.setName(newCategory.getName());
+            isChanged = true;
         }
 
-        return null;
+        if (newCategory.getDescription() != null && !Objects.equals(oldCategory.getDescription(), newCategory.getDescription())) {
+            oldCategory.setDescription(newCategory.getDescription());
+            isChanged = true;
+        }
+
+        return isChanged ? categoryRepository.save(oldCategory) : oldCategory;
     }
 
     public String deleteCategory(Long id) {
-        Optional<Category> optionalCategory = categoryRepository.findById(id);
-
-        if (optionalCategory.isPresent()) {
-            categoryRepository.deleteById(id);
-            return "Xóa category thành công";
+        if (!categoryRepository.existsById(id)) {
+            return "Khong tim thay category";
         }
 
-        return "Không tìm thấy category";
+        categoryRepository.deleteById(id);
+        return "Xoa category thanh cong";
     }
 }

@@ -2,9 +2,13 @@ package com.project2.library_management.controller;
 
 import com.project2.library_management.entity.Author;
 import com.project2.library_management.service.AuthorService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/authors")
@@ -17,27 +21,31 @@ public class AuthorController {
     }
 
     @GetMapping
-    public List<Author> getAllAuthors() {
-        return authorService.getAllAuthors();
+    public ResponseEntity<List<Author>> getAllAuthors() {
+        return ResponseEntity.ok(authorService.getAllAuthors());
     }
 
     @GetMapping("/{id}")
-    public Author getAuthorById(@PathVariable Long id) {
-        return authorService.getAuthorById(id);
+    public ResponseEntity<Author> getAuthorById(@PathVariable Long id) {
+        return ResponseEntity.ok(authorService.getAuthorById(id));
     }
 
     @PostMapping
-    public Author createAuthor(@RequestBody Author author) {
-        return authorService.createAuthor(author);
+    public ResponseEntity<Author> createAuthor(@RequestBody Author author) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authorService.createAuthor(author));
     }
 
     @PutMapping("/{id}")
-    public Author updateAuthor(@PathVariable Long id, @RequestBody Author author) {
-        return authorService.updateAuthor(id, author);
+    public ResponseEntity<Author> updateAuthor(@PathVariable Long id, @RequestBody Author author) {
+        return ResponseEntity.ok(authorService.updateAuthor(id, author));
     }
 
     @DeleteMapping("/{id}")
-    public String deleteAuthor(@PathVariable Long id) {
-        return authorService.deleteAuthor(id);
+    public ResponseEntity<Map<String, String>> deleteAuthor(@PathVariable Long id) {
+        authorService.deleteAuthor(id);
+
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Delete author successfully");
+        return ResponseEntity.ok(response);
     }
 }

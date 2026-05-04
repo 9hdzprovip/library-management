@@ -1,13 +1,12 @@
 package com.project2.library_management.service;
 
 import com.project2.library_management.entity.Author;
-import com.project2.library_management.entity.Category;
 import com.project2.library_management.repository.AuthorRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class AuthorService {
@@ -23,8 +22,9 @@ public class AuthorService {
     }
 
     public Author getAuthorById(Long id) {
-        Optional<Author> optionalAuthor = authorRepository.findById(id);
-        return optionalAuthor.orElse(null);
+        // Do not return null when record is missing.
+        return authorRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Author not found with id = " + id));
     }
 
     public Author createAuthor(Author author) {
@@ -32,41 +32,30 @@ public class AuthorService {
     }
 
     public Author updateAuthor(Long id, Author newAuthor) {
-        Optional<Author> optionalAuthor = authorRepository.findById(id);
+        Author oldAuthor = authorRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Author not found with id = " + id));
+        boolean isChanged = false;
 
-        if (optionalAuthor.isPresent()) {
-            Author oldAuthor = optionalAuthor.get();
-            boolean isChanged = false;
-
-            if (!Objects.equals(oldAuthor.getName(), newAuthor.getName())) {
-                oldAuthor.setName(newAuthor.getName());
-                isChanged = true;
-            }
-
-            if (!Objects.equals(oldAuthor.getBiography(), newAuthor.getBiography())) {
-                oldAuthor.setBiography(newAuthor.getBiography());
-                isChanged = true;
-            }
-
-            if (isChanged) {
-                return authorRepository.save(oldAuthor);
-            } else {
-                System.out.println("Không có gì thay đổi");
-                return oldAuthor;
-            }
+        // Update only if the new value is provided and different.
+        if (newAuthor.getName() != null && !Objects.equals(oldAuthor.getName(), newAuthor.getName())) {
+            oldAuthor.setName(newAuthor.getName());
+            isChanged = true;
         }
 
-        return null;
+        if (newAuthor.getBiography() != null && !Objects.equals(oldAuthor.getBiography(), newAuthor.getBiography())) {
+            oldAuthor.setBiography(newAuthor.getBiography());
+            isChanged = true;
+        }
+
+        return isChanged ? authorRepository.save(oldAuthor) : oldAuthor;
     }
 
     public String deleteAuthor(Long id) {
-        Optional<Author> optionalAuthor = authorRepository.findById(id);
-
-        if (optionalAuthor.isPresent()) {
-            authorRepository.deleteById(id);
-            return "Xóa author thành công";
+        if (!authorRepository.existsById(id)) {
+            return "Khong tim thay author";
         }
 
-        return "Không tìm thấy author";
+        authorRepository.deleteById(id);
+        return "Xoa author thanh cong";
     }
 }

@@ -9,8 +9,8 @@ import com.project2.library_management.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class BookService {
@@ -32,118 +32,110 @@ public class BookService {
     }
 
     public Book getBookById(Long id) {
-        Optional<Book> optionalBook = bookRepository.findById(id);
-        return optionalBook.orElse(null);
+        // Do not return null when record is missing.
+        return bookRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Book not found with id = " + id));
     }
 
     public Book createBook(Book book) {
-        if (book.getAuthor() != null && book.getAuthor().getId() != null) {
-            Optional<Author> optionalAuthor = authorRepository.findById(book.getAuthor().getId());
-            if (optionalAuthor.isPresent()) {
-                book.setAuthor(optionalAuthor.get());
-            } else {
-                throw new RuntimeException("Không tìm thấy author với id = " + book.getAuthor().getId());
+        if (book.getAuthor() != null) {
+            if (book.getAuthor().getId() == null) {
+                throw new IllegalArgumentException("Author id must not be null");
             }
+            // Resolve relation by id and fail clearly if not found.
+            Author author = authorRepository.findById(book.getAuthor().getId())
+                    .orElseThrow(() -> new NoSuchElementException("Author not found with id = " + book.getAuthor().getId()));
+            book.setAuthor(author);
         }
 
-        if (book.getCategory() != null && book.getCategory().getId() != null) {
-            Optional<Category> optionalCategory = categoryRepository.findById(book.getCategory().getId());
-            if (optionalCategory.isPresent()) {
-                book.setCategory(optionalCategory.get());
-            } else {
-                throw new RuntimeException("Không tìm thấy category với id = " + book.getCategory().getId());
+        if (book.getCategory() != null) {
+            if (book.getCategory().getId() == null) {
+                throw new IllegalArgumentException("Category id must not be null");
             }
+            // Resolve relation by id and fail clearly if not found.
+            Category category = categoryRepository.findById(book.getCategory().getId())
+                    .orElseThrow(() -> new NoSuchElementException("Category not found with id = " + book.getCategory().getId()));
+            book.setCategory(category);
         }
 
         return bookRepository.save(book);
     }
 
     public Book updateBook(Long id, Book newBook) {
-        Optional<Book> optionalBook = bookRepository.findById(id);
+        Book oldBook = bookRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Book not found with id = " + id));
+        boolean isChanged = false;
 
-        if (optionalBook.isPresent()) {
-            Book oldBook = optionalBook.get();
-            boolean isChanged = false;
+        // Update only if the new value is provided and different.
+        if (newBook.getTitle() != null && !Objects.equals(oldBook.getTitle(), newBook.getTitle())) {
+            oldBook.setTitle(newBook.getTitle());
+            isChanged = true;
+        }
 
-            if (!Objects.equals(oldBook.getTitle(), newBook.getTitle())) {
-                oldBook.setTitle(newBook.getTitle());
+        if (newBook.getDescription() != null && !Objects.equals(oldBook.getDescription(), newBook.getDescription())) {
+            oldBook.setDescription(newBook.getDescription());
+            isChanged = true;
+        }
+
+        if (newBook.getPublisher() != null && !Objects.equals(oldBook.getPublisher(), newBook.getPublisher())) {
+            oldBook.setPublisher(newBook.getPublisher());
+            isChanged = true;
+        }
+
+        if (newBook.getPublishYear() != null && !Objects.equals(oldBook.getPublishYear(), newBook.getPublishYear())) {
+            oldBook.setPublishYear(newBook.getPublishYear());
+            isChanged = true;
+        }
+
+        if (newBook.getQuantity() != null && !Objects.equals(oldBook.getQuantity(), newBook.getQuantity())) {
+            oldBook.setQuantity(newBook.getQuantity());
+            isChanged = true;
+        }
+
+        if (newBook.getAvailableQuantity() != null && !Objects.equals(oldBook.getAvailableQuantity(), newBook.getAvailableQuantity())) {
+            oldBook.setAvailableQuantity(newBook.getAvailableQuantity());
+            isChanged = true;
+        }
+
+        if (newBook.getAuthor() != null) {
+            if (newBook.getAuthor().getId() == null) {
+                throw new IllegalArgumentException("Author id must not be null");
+            }
+
+            Long oldAuthorId = oldBook.getAuthor() != null ? oldBook.getAuthor().getId() : null;
+            Long newAuthorId = newBook.getAuthor().getId();
+            if (!Objects.equals(oldAuthorId, newAuthorId)) {
+                Author author = authorRepository.findById(newAuthorId)
+                        .orElseThrow(() -> new NoSuchElementException("Author not found with id = " + newAuthorId));
+                oldBook.setAuthor(author);
                 isChanged = true;
-            }
-
-            if (!Objects.equals(oldBook.getDescription(), newBook.getDescription())) {
-                oldBook.setDescription(newBook.getDescription());
-                isChanged = true;
-            }
-
-            if (!Objects.equals(oldBook.getPublisher(), newBook.getPublisher())) {
-                oldBook.setPublisher(newBook.getPublisher());
-                isChanged = true;
-            }
-
-            if (!Objects.equals(oldBook.getPublishYear(), newBook.getPublishYear())) {
-                oldBook.setPublishYear(newBook.getPublishYear());
-                isChanged = true;
-            }
-
-            if (!Objects.equals(oldBook.getQuantity(), newBook.getQuantity())) {
-                oldBook.setQuantity(newBook.getQuantity());
-                isChanged = true;
-            }
-
-            if (!Objects.equals(oldBook.getAvailableQuantity(), newBook.getAvailableQuantity())) {
-                oldBook.setAvailableQuantity(newBook.getAvailableQuantity());
-                isChanged = true;
-            }
-
-            if (newBook.getAuthor() != null && newBook.getAuthor().getId() != null) {
-                Long oldAuthorId = oldBook.getAuthor() != null ? oldBook.getAuthor().getId() : null;
-                Long newAuthorId = newBook.getAuthor().getId();
-
-                if (!Objects.equals(oldAuthorId, newAuthorId)) {
-                    Optional<Author> optionalAuthor = authorRepository.findById(newAuthorId);
-                    if (optionalAuthor.isPresent()) {
-                        oldBook.setAuthor(optionalAuthor.get());
-                        isChanged = true;
-                    } else {
-                        return null;
-                    }
-                }
-            }
-
-            if (newBook.getCategory() != null && newBook.getCategory().getId() != null) {
-                Long oldCategoryId = oldBook.getCategory() != null ? oldBook.getCategory().getId() : null;
-                Long newCategoryId = newBook.getCategory().getId();
-
-                if (!Objects.equals(oldCategoryId, newCategoryId)) {
-                    Optional<Category> optionalCategory = categoryRepository.findById(newCategoryId);
-                    if (optionalCategory.isPresent()) {
-                        oldBook.setCategory(optionalCategory.get());
-                        isChanged = true;
-                    } else {
-                        return null;
-                    }
-                }
-            }
-
-            if (isChanged) {
-                return bookRepository.save(oldBook);
-            } else {
-                System.out.println("Không có gì thay đổi");
-                return oldBook;
             }
         }
 
-        return null;
+        if (newBook.getCategory() != null) {
+            if (newBook.getCategory().getId() == null) {
+                throw new IllegalArgumentException("Category id must not be null");
+            }
+
+            Long oldCategoryId = oldBook.getCategory() != null ? oldBook.getCategory().getId() : null;
+            Long newCategoryId = newBook.getCategory().getId();
+            if (!Objects.equals(oldCategoryId, newCategoryId)) {
+                Category category = categoryRepository.findById(newCategoryId)
+                        .orElseThrow(() -> new NoSuchElementException("Category not found with id = " + newCategoryId));
+                oldBook.setCategory(category);
+                isChanged = true;
+            }
+        }
+
+        return isChanged ? bookRepository.save(oldBook) : oldBook;
     }
 
     public String deleteBook(Long id) {
-        Optional<Book> optionalBook = bookRepository.findById(id);
-
-        if (optionalBook.isPresent()) {
-            bookRepository.deleteById(id);
-            return "Xóa book thành công";
+        if (!bookRepository.existsById(id)) {
+            return "Khong tim thay book";
         }
 
-        return "Không tìm thấy book";
+        bookRepository.deleteById(id);
+        return "Xoa book thanh cong";
     }
 }

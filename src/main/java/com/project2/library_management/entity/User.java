@@ -1,5 +1,6 @@
 package com.project2.library_management.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.project2.library_management.enums.UserRole;
 import jakarta.persistence.*;
@@ -7,7 +8,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@JsonPropertyOrder({ "id", "username", "password", "fullName", "email", "role", "createdAt" })
+@JsonPropertyOrder({ "id", "username", "fullName", "email", "role", "createdAt" })
 @Table(name = "users")
 public class User {
 
@@ -15,7 +16,11 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String username;
+
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+
     @Column(name = "full_name")
     private String fullName;
     private String email;
@@ -23,7 +28,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     public User() {
@@ -69,6 +74,7 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
     public String getFullName() {
         return fullName;
     }
@@ -84,6 +90,7 @@ public class User {
     public void setEmail(String email) {
         this.email = email;
     }
+
     public UserRole getRole() {
         return role;
     }
@@ -91,6 +98,7 @@ public class User {
     public void setRole(UserRole role) {
         this.role = role;
     }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }

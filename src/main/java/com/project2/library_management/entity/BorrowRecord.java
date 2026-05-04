@@ -3,6 +3,7 @@ package com.project2.library_management.entity;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.project2.library_management.enums.BorrowStatus;
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -35,7 +36,8 @@ public class BorrowRecord {
     @Enumerated(EnumType.STRING)
     private BorrowStatus status;
 
-    @Column(name = "created_at")
+    // Keep original createdAt value after insert.
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     public BorrowRecord() {

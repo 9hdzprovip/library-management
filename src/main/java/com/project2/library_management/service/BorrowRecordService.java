@@ -9,131 +9,123 @@ import com.project2.library_management.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 public class BorrowRecordService {
 
-	private final BorrowRecordRepository borrowRecordRepository;
-	private final UserRepository userRepository;
-	private final BookRepository bookRepository;
+    private final BorrowRecordRepository borrowRecordRepository;
+    private final UserRepository userRepository;
+    private final BookRepository bookRepository;
 
-	public BorrowRecordService(BorrowRecordRepository borrowRecordRepository,
-							   UserRepository userRepository,
-							   BookRepository bookRepository) {
-		this.borrowRecordRepository = borrowRecordRepository;
-		this.userRepository = userRepository;
-		this.bookRepository = bookRepository;
-	}
+    public BorrowRecordService(BorrowRecordRepository borrowRecordRepository,
+                               UserRepository userRepository,
+                               BookRepository bookRepository) {
+        this.borrowRecordRepository = borrowRecordRepository;
+        this.userRepository = userRepository;
+        this.bookRepository = bookRepository;
+    }
 
-	public List<BorrowRecord> getAllBorrowRecords() {
-		return borrowRecordRepository.findAll();
-	}
+    public List<BorrowRecord> getAllBorrowRecords() {
+        return borrowRecordRepository.findAll();
+    }
 
-	public BorrowRecord getBorrowRecordById(Long id) {
-		Optional<BorrowRecord> optionalBorrowRecord = borrowRecordRepository.findById(id);
-		return optionalBorrowRecord.orElse(null);
-	}
+    public BorrowRecord getBorrowRecordById(Long id) {
+        // Do not return null when record is missing.
+        return borrowRecordRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Borrow record not found with id = " + id));
+    }
 
-	public BorrowRecord createBorrowRecord(BorrowRecord borrowRecord) {
-		if (borrowRecord.getUser() != null && borrowRecord.getUser().getId() != null) {
-			Optional<User> optionalUser = userRepository.findById(borrowRecord.getUser().getId());
-			if (optionalUser.isPresent()) {
-				borrowRecord.setUser(optionalUser.get());
-			} else {
-				throw new RuntimeException("Không tìm thấy user với id = " + borrowRecord.getUser().getId());
-			}
-		}
+    public BorrowRecord createBorrowRecord(BorrowRecord borrowRecord) {
+        if (borrowRecord.getUser() != null) {
+            if (borrowRecord.getUser().getId() == null) {
+                throw new IllegalArgumentException("User id must not be null");
+            }
+            // Resolve relation by id and fail clearly if not found.
+            User user = userRepository.findById(borrowRecord.getUser().getId())
+                    .orElseThrow(() -> new NoSuchElementException("User not found with id = " + borrowRecord.getUser().getId()));
+            borrowRecord.setUser(user);
+        }
 
-		if (borrowRecord.getBook() != null && borrowRecord.getBook().getId() != null) {
-			Optional<Book> optionalBook = bookRepository.findById(borrowRecord.getBook().getId());
-			if (optionalBook.isPresent()) {
-				borrowRecord.setBook(optionalBook.get());
-			} else {
-				throw new RuntimeException("Không tìm thấy book với id = " + borrowRecord.getBook().getId());
-			}
-		}
+        if (borrowRecord.getBook() != null) {
+            if (borrowRecord.getBook().getId() == null) {
+                throw new IllegalArgumentException("Book id must not be null");
+            }
+            // Resolve relation by id and fail clearly if not found.
+            Book book = bookRepository.findById(borrowRecord.getBook().getId())
+                    .orElseThrow(() -> new NoSuchElementException("Book not found with id = " + borrowRecord.getBook().getId()));
+            borrowRecord.setBook(book);
+        }
 
-		return borrowRecordRepository.save(borrowRecord);
-	}
+        return borrowRecordRepository.save(borrowRecord);
+    }
 
-	public BorrowRecord updateBorrowRecord(Long id, BorrowRecord newBorrowRecord) {
-		Optional<BorrowRecord> optionalBorrowRecord = borrowRecordRepository.findById(id);
+    public BorrowRecord updateBorrowRecord(Long id, BorrowRecord newBorrowRecord) {
+        BorrowRecord oldBorrowRecord = borrowRecordRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Borrow record not found with id = " + id));
+        boolean isChanged = false;
 
-		if (optionalBorrowRecord.isPresent()) {
-			BorrowRecord oldBorrowRecord = optionalBorrowRecord.get();
-			boolean isChanged = false;
+        // Update only if the new value is provided and different.
+        if (newBorrowRecord.getBorrowDate() != null && !Objects.equals(oldBorrowRecord.getBorrowDate(), newBorrowRecord.getBorrowDate())) {
+            oldBorrowRecord.setBorrowDate(newBorrowRecord.getBorrowDate());
+            isChanged = true;
+        }
 
-			if (!Objects.equals(oldBorrowRecord.getBorrowDate(), newBorrowRecord.getBorrowDate())) {
-				oldBorrowRecord.setBorrowDate(newBorrowRecord.getBorrowDate());
-				isChanged = true;
-			}
+        if (newBorrowRecord.getDueDate() != null && !Objects.equals(oldBorrowRecord.getDueDate(), newBorrowRecord.getDueDate())) {
+            oldBorrowRecord.setDueDate(newBorrowRecord.getDueDate());
+            isChanged = true;
+        }
 
-			if (!Objects.equals(oldBorrowRecord.getDueDate(), newBorrowRecord.getDueDate())) {
-				oldBorrowRecord.setDueDate(newBorrowRecord.getDueDate());
-				isChanged = true;
-			}
+        if (newBorrowRecord.getReturnDate() != null && !Objects.equals(oldBorrowRecord.getReturnDate(), newBorrowRecord.getReturnDate())) {
+            oldBorrowRecord.setReturnDate(newBorrowRecord.getReturnDate());
+            isChanged = true;
+        }
 
-			if (!Objects.equals(oldBorrowRecord.getReturnDate(), newBorrowRecord.getReturnDate())) {
-				oldBorrowRecord.setReturnDate(newBorrowRecord.getReturnDate());
-				isChanged = true;
-			}
+        if (newBorrowRecord.getStatus() != null && !Objects.equals(oldBorrowRecord.getStatus(), newBorrowRecord.getStatus())) {
+            oldBorrowRecord.setStatus(newBorrowRecord.getStatus());
+            isChanged = true;
+        }
 
-			if (!Objects.equals(oldBorrowRecord.getStatus(), newBorrowRecord.getStatus())) {
-				oldBorrowRecord.setStatus(newBorrowRecord.getStatus());
-				isChanged = true;
-			}
+        if (newBorrowRecord.getUser() != null) {
+            if (newBorrowRecord.getUser().getId() == null) {
+                throw new IllegalArgumentException("User id must not be null");
+            }
 
-			if (newBorrowRecord.getUser() != null && newBorrowRecord.getUser().getId() != null) {
-				Long oldUserId = oldBorrowRecord.getUser() != null ? oldBorrowRecord.getUser().getId() : null;
-				Long newUserId = newBorrowRecord.getUser().getId();
+            Long oldUserId = oldBorrowRecord.getUser() != null ? oldBorrowRecord.getUser().getId() : null;
+            Long newUserId = newBorrowRecord.getUser().getId();
+            if (!Objects.equals(oldUserId, newUserId)) {
+                User user = userRepository.findById(newUserId)
+                        .orElseThrow(() -> new NoSuchElementException("User not found with id = " + newUserId));
+                oldBorrowRecord.setUser(user);
+                isChanged = true;
+            }
+        }
 
-				if (!Objects.equals(oldUserId, newUserId)) {
-					Optional<User> optionalUser = userRepository.findById(newUserId);
-					if (optionalUser.isPresent()) {
-						oldBorrowRecord.setUser(optionalUser.get());
-						isChanged = true;
-					} else {
-						return null;
-					}
-				}
-			}
+        if (newBorrowRecord.getBook() != null) {
+            if (newBorrowRecord.getBook().getId() == null) {
+                throw new IllegalArgumentException("Book id must not be null");
+            }
 
-			if (newBorrowRecord.getBook() != null && newBorrowRecord.getBook().getId() != null) {
-				Long oldBookId = oldBorrowRecord.getBook() != null ? oldBorrowRecord.getBook().getId() : null;
-				Long newBookId = newBorrowRecord.getBook().getId();
+            Long oldBookId = oldBorrowRecord.getBook() != null ? oldBorrowRecord.getBook().getId() : null;
+            Long newBookId = newBorrowRecord.getBook().getId();
+            if (!Objects.equals(oldBookId, newBookId)) {
+                Book book = bookRepository.findById(newBookId)
+                        .orElseThrow(() -> new NoSuchElementException("Book not found with id = " + newBookId));
+                oldBorrowRecord.setBook(book);
+                isChanged = true;
+            }
+        }
 
-				if (!Objects.equals(oldBookId, newBookId)) {
-					Optional<Book> optionalBook = bookRepository.findById(newBookId);
-					if (optionalBook.isPresent()) {
-						oldBorrowRecord.setBook(optionalBook.get());
-						isChanged = true;
-					} else {
-						return null;
-					}
-				}
-			}
+        return isChanged ? borrowRecordRepository.save(oldBorrowRecord) : oldBorrowRecord;
+    }
 
-			if (isChanged) {
-				return borrowRecordRepository.save(oldBorrowRecord);
-			} else {
-				System.out.println("Không có gì thay đổi");
-				return oldBorrowRecord;
-			}
-		}
+    public String deleteBorrowRecord(Long id) {
+        if (!borrowRecordRepository.existsById(id)) {
+            return "Khong tim thay borrow record";
+        }
 
-		return null;
-	}
-
-	public String deleteBorrowRecord(Long id) {
-		Optional<BorrowRecord> optionalBorrowRecord = borrowRecordRepository.findById(id);
-
-		if (optionalBorrowRecord.isPresent()) {
-			borrowRecordRepository.deleteById(id);
-			return "Xóa borrow record thành công";
-		}
-
-		return "Không tìm thấy borrow record";
-	}
+        borrowRecordRepository.deleteById(id);
+        return "Xoa borrow record thanh cong";
+    }
 }

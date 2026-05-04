@@ -2,6 +2,7 @@ package com.project2.library_management.entity;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -36,16 +37,19 @@ public class Book {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @Column(name = "created_at")
+    // Keep original createdAt value after insert.
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     public Book() {
     }
+
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now();
+        }
     }
-
 
     public Long getId() {
         return id;
