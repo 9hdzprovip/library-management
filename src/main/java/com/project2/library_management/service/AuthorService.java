@@ -1,5 +1,7 @@
 package com.project2.library_management.service;
 
+import com.project2.library_management.dto.request.AuthorRequest;
+import com.project2.library_management.dto.response.AuthorResponse;
 import com.project2.library_management.entity.Author;
 import com.project2.library_management.repository.AuthorRepository;
 import org.springframework.stereotype.Service;
@@ -7,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class AuthorService {
@@ -17,37 +20,47 @@ public class AuthorService {
         this.authorRepository = authorRepository;
     }
 
-    public List<Author> getAllAuthors() {
-        return authorRepository.findAll();
+    public List<AuthorResponse> getAllAuthors() {
+        return authorRepository.findAll()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    public Author getAuthorById(Long id) {
+    public AuthorResponse getAuthorById(Long id) {
         // Do not return null when record is missing.
-        return authorRepository.findById(id)
+        Author author = authorRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + id));
+        return convertToResponse(author);
     }
 
-    public Author createAuthor(Author author) {
-        return authorRepository.save(author);
+    public AuthorResponse createAuthor(AuthorRequest request) {
+        Author author = new Author();
+        author.setName(request.getName());
+        author.setBiography(request.getBiography());
+        
+        Author savedAuthor = authorRepository.save(author);
+        return convertToResponse(savedAuthor);
     }
 
-    public Author updateAuthor(Long id, Author newAuthor) {
+    public AuthorResponse updateAuthor(Long id, AuthorRequest request) {
         Author oldAuthor = authorRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + id));
         boolean isChanged = false;
 
         // Update only if the new value is provided and different.
-        if (newAuthor.getName() != null && !Objects.equals(oldAuthor.getName(), newAuthor.getName())) {
-            oldAuthor.setName(newAuthor.getName());
+        if (request.getName() != null && !Objects.equals(oldAuthor.getName(), request.getName())) {
+            oldAuthor.setName(request.getName());
             isChanged = true;
         }
 
-        if (newAuthor.getBiography() != null && !Objects.equals(oldAuthor.getBiography(), newAuthor.getBiography())) {
-            oldAuthor.setBiography(newAuthor.getBiography());
+        if (request.getBiography() != null && !Objects.equals(oldAuthor.getBiography(), request.getBiography())) {
+            oldAuthor.setBiography(request.getBiography());
             isChanged = true;
         }
 
-        return isChanged ? authorRepository.save(oldAuthor) : oldAuthor;
+        Author savedAuthor = isChanged ? authorRepository.save(oldAuthor) : oldAuthor;
+        return convertToResponse(savedAuthor);
     }
 
     public void deleteAuthor(Long id) {
@@ -55,5 +68,14 @@ public class AuthorService {
             throw new NoSuchElementException("Không tìm thấy tác giả với id = " + id);
         }
         authorRepository.deleteById(id);
+    }
+
+    private AuthorResponse convertToResponse(Author author) {
+        return new AuthorResponse(
+                author.getId(),
+                author.getName(),
+                author.getBiography(),
+                author.getCreatedAt()
+        );
     }
 }

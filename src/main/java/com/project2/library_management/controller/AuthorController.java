@@ -1,7 +1,8 @@
 package com.project2.library_management.controller;
 
+import com.project2.library_management.dto.request.AuthorRequest;
+import com.project2.library_management.dto.response.AuthorResponse;
 import com.project2.library_management.dto.response.MessageResponse;
-import com.project2.library_management.entity.Author;
 import com.project2.library_management.service.AuthorService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,23 +22,23 @@ public class AuthorController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Author>> getAllAuthors() {
+    public ResponseEntity<List<AuthorResponse>> getAllAuthors() {
         return ResponseEntity.ok(authorService.getAllAuthors());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Author> getAuthorById(@PathVariable Long id) {
+    public ResponseEntity<AuthorResponse> getAuthorById(@PathVariable Long id) {
         return ResponseEntity.ok(authorService.getAuthorById(id));
     }
 
     @PostMapping
-    public ResponseEntity<Author> createAuthor(@Valid @RequestBody Author author) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(authorService.createAuthor(author));
+    public ResponseEntity<AuthorResponse> createAuthor(@Valid @RequestBody AuthorRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authorService.createAuthor(request));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Author> updateAuthor(@PathVariable Long id, @Valid @RequestBody Author author) {
-        return ResponseEntity.ok(authorService.updateAuthor(id, author));
+    public ResponseEntity<AuthorResponse> updateAuthor(@PathVariable Long id, @Valid @RequestBody AuthorRequest request) {
+        return ResponseEntity.ok(authorService.updateAuthor(id, request));
     }
 
     @DeleteMapping("/{id}")

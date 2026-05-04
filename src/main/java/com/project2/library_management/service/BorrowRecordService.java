@@ -1,6 +1,7 @@
 package com.project2.library_management.service;
 
 import com.project2.library_management.dto.BorrowBookRequest;
+import com.project2.library_management.dto.response.BorrowRecordResponse;
 import com.project2.library_management.entity.Book;
 import com.project2.library_management.entity.BorrowRecord;
 import com.project2.library_management.entity.User;
@@ -15,6 +16,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class BorrowRecordService {
@@ -31,18 +33,22 @@ public class BorrowRecordService {
         this.bookRepository = bookRepository;
     }
 
-    public List<BorrowRecord> getAllBorrowRecords() {
-        return borrowRecordRepository.findAll();
+    public List<BorrowRecordResponse> getAllBorrowRecords() {
+        return borrowRecordRepository.findAll()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    public BorrowRecord getBorrowRecordById(Long id) {
+    public BorrowRecordResponse getBorrowRecordById(Long id) {
         // Do not return null when record is missing.
-        return borrowRecordRepository.findById(id)
+        BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
+        return convertToResponse(borrowRecord);
     }
 
     @Transactional
-    public BorrowRecord borrowBook(BorrowBookRequest request) {
+    public BorrowRecordResponse borrowBook(BorrowBookRequest request) {
         if (request.getUserId() == null) {
             throw new IllegalArgumentException("User id must not be null");
         }
@@ -81,11 +87,12 @@ public class BorrowRecordService {
         borrowRecord.setReturnDate(null);
         borrowRecord.setStatus(BorrowStatus.BORROWED);
 
-        return borrowRecordRepository.save(borrowRecord);
+        BorrowRecord savedRecord = borrowRecordRepository.save(borrowRecord);
+        return convertToResponse(savedRecord);
     }
 
     @Transactional
-    public BorrowRecord returnBook(Long id) {
+    public BorrowRecordResponse returnBook(Long id) {
         BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
 
@@ -115,11 +122,12 @@ public class BorrowRecordService {
         borrowRecord.setReturnDate(LocalDate.now());
         borrowRecord.setStatus(BorrowStatus.RETURNED);
 
-        return borrowRecordRepository.save(borrowRecord);
+        BorrowRecord savedRecord = borrowRecordRepository.save(borrowRecord);
+        return convertToResponse(savedRecord);
     }
 
     @Transactional
-    public List<BorrowRecord> updateOverdueBorrowRecords() {
+    public List<BorrowRecordResponse> updateOverdueBorrowRecords() {
         LocalDate today = LocalDate.now();
         List<BorrowRecord> borrowedRecords = borrowRecordRepository.findByStatus(BorrowStatus.BORROWED);
         List<BorrowRecord> overdueRecords = new java.util.ArrayList<>();
@@ -135,10 +143,12 @@ public class BorrowRecordService {
             borrowRecordRepository.saveAll(overdueRecords);
         }
 
-        return overdueRecords;
+        return overdueRecords.stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    public BorrowRecord updateBorrowRecord(Long id, BorrowRecord newBorrowRecord) {
+    public BorrowRecordResponse updateBorrowRecord(Long id, BorrowRecord newBorrowRecord) {
         BorrowRecord oldBorrowRecord = borrowRecordRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
         boolean isChanged = false;
@@ -194,7 +204,8 @@ public class BorrowRecordService {
             }
         }
 
-        return isChanged ? borrowRecordRepository.save(oldBorrowRecord) : oldBorrowRecord;
+        BorrowRecord savedRecord = isChanged ? borrowRecordRepository.save(oldBorrowRecord) : oldBorrowRecord;
+        return convertToResponse(savedRecord);
     }
 
     public void deleteBorrowRecord(Long id) {
@@ -204,19 +215,41 @@ public class BorrowRecordService {
         borrowRecordRepository.deleteById(id);
     }
 
-    public List<BorrowRecord> getBorrowRecordsByUserId(Long userId) {
+    public List<BorrowRecordResponse> getBorrowRecordsByUserId(Long userId) {
         userRepository.findById(userId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + userId));
-        return borrowRecordRepository.findByUserId(userId);
+        return borrowRecordRepository.findByUserId(userId)
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    public List<BorrowRecord> getBorrowRecordsByStatus(String statusStr) {
+    public List<BorrowRecordResponse> getBorrowRecordsByStatus(String statusStr) {
         BorrowStatus status;
         try {
             status = BorrowStatus.valueOf(statusStr.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Trạng thái không hợp lệ: " + statusStr + ". Giá trị hợp lệ: BORROWED, RETURNED, OVERDUE");
         }
-        return borrowRecordRepository.findByStatus(status);
+        return borrowRecordRepository.findByStatus(status)
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private BorrowRecordResponse convertToResponse(BorrowRecord record) {
+        return new BorrowRecordResponse(
+                record.getId(),
+                record.getUser() != null ? record.getUser().getId() : null,
+                record.getUser() != null ? record.getUser().getUsername() : null,
+                record.getUser() != null ? record.getUser().getFullName() : null,
+                record.getBook() != null ? record.getBook().getId() : null,
+                record.getBook() != null ? record.getBook().getTitle() : null,
+                record.getBorrowDate(),
+                record.getDueDate(),
+                record.getReturnDate(),
+                record.getStatus(),
+                record.getCreatedAt()
+        );
     }
 }
