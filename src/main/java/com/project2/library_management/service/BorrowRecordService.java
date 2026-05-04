@@ -55,6 +55,11 @@ public class BorrowRecordService {
             throw new IllegalArgumentException("Due date must not be null");
         }
 
+        LocalDate today = LocalDate.now();
+        if (request.getDueDate().isBefore(today)) {
+            throw new IllegalArgumentException("Due date must be after or equal to borrow date");
+        }
+
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new NoSuchElementException("User not found with id = " + request.getUserId()));
 
@@ -111,6 +116,26 @@ public class BorrowRecordService {
         borrowRecord.setStatus(BorrowStatus.RETURNED);
 
         return borrowRecordRepository.save(borrowRecord);
+    }
+
+    @Transactional
+    public List<BorrowRecord> updateOverdueBorrowRecords() {
+        LocalDate today = LocalDate.now();
+        List<BorrowRecord> borrowedRecords = borrowRecordRepository.findByStatus(BorrowStatus.BORROWED);
+        List<BorrowRecord> overdueRecords = new java.util.ArrayList<>();
+
+        for (BorrowRecord borrowRecord : borrowedRecords) {
+            if (borrowRecord.getDueDate() != null && borrowRecord.getDueDate().isBefore(today)) {
+                borrowRecord.setStatus(BorrowStatus.OVERDUE);
+                overdueRecords.add(borrowRecord);
+            }
+        }
+
+        if (!overdueRecords.isEmpty()) {
+            borrowRecordRepository.saveAll(overdueRecords);
+        }
+
+        return overdueRecords;
     }
 
     public BorrowRecord updateBorrowRecord(Long id, BorrowRecord newBorrowRecord) {

@@ -41,6 +41,11 @@ public class BorrowRecordController {
 		return ResponseEntity.ok(borrowRecordService.returnBook(id));
 	}
 
+	@PutMapping("/update-overdue")
+	public ResponseEntity<List<BorrowRecord>> updateOverdueBorrowRecords() {
+		return ResponseEntity.ok(borrowRecordService.updateOverdueBorrowRecords());
+	}
+
 	@PutMapping("/{id}")
 	public ResponseEntity<BorrowRecord> updateBorrowRecord(@PathVariable Long id, @RequestBody BorrowRecord borrowRecord) {
 		return ResponseEntity.ok(borrowRecordService.updateBorrowRecord(id, borrowRecord));
