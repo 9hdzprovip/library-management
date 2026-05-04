@@ -1,7 +1,8 @@
 package com.project2.library_management.controller;
 
+import com.project2.library_management.dto.request.UserRequest;
 import com.project2.library_management.dto.response.MessageResponse;
-import com.project2.library_management.entity.User;
+import com.project2.library_management.dto.response.UserResponse;
 import com.project2.library_management.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -21,23 +22,23 @@ public class UserController {
 	}
 
 	@GetMapping
-	public ResponseEntity<List<User>> getAllUsers() {
+	public ResponseEntity<List<UserResponse>> getAllUsers() {
 		return ResponseEntity.ok(userService.getAllUsers());
 	}
 
 	@GetMapping("/{id}")
-	public ResponseEntity<User> getUserById(@PathVariable Long id) {
+	public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
 		return ResponseEntity.ok(userService.getUserById(id));
 	}
 
 	@PostMapping
-	public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(user));
+	public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest request) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(request));
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
-		return ResponseEntity.ok(userService.updateUser(id, user));
+	public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
+		return ResponseEntity.ok(userService.updateUser(id, request));
 	}
 
 	@DeleteMapping("/{id}")

@@ -1,5 +1,7 @@
 package com.project2.library_management.service;
 
+import com.project2.library_management.dto.request.BookRequest;
+import com.project2.library_management.dto.response.BookResponse;
 import com.project2.library_management.entity.Author;
 import com.project2.library_management.entity.Book;
 import com.project2.library_management.entity.Category;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class BookService {
@@ -27,107 +30,113 @@ public class BookService {
         this.categoryRepository = categoryRepository;
     }
 
-    public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+    public List<BookResponse> getAllBooks() {
+        return bookRepository.findAll()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    public Book getBookById(Long id) {
+    public BookResponse getBookById(Long id) {
         // Do not return null when record is missing.
-        return bookRepository.findById(id)
+        Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + id));
+        return convertToResponse(book);
     }
 
-    public Book createBook(Book book) {
-        if (book.getAuthor() != null) {
-            if (book.getAuthor().getId() == null) {
-                throw new IllegalArgumentException("Author id must not be null");
-            }
-            // Resolve relation by id and fail clearly if not found.
-            Author author = authorRepository.findById(book.getAuthor().getId())
-                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + book.getAuthor().getId()));
-            book.setAuthor(author);
+    public BookResponse createBook(BookRequest request) {
+        Book book = new Book();
+        book.setTitle(request.getTitle());
+        book.setDescription(request.getDescription());
+        book.setPublisher(request.getPublisher());
+        book.setPublishYear(request.getPublishYear());
+        book.setQuantity(request.getQuantity());
+        book.setAvailableQuantity(request.getAvailableQuantity());
+
+        // Validate availableQuantity <= quantity
+        if (request.getAvailableQuantity() > request.getQuantity()) {
+            throw new IllegalArgumentException("Số lượng sách còn lại không được lớn hơn tổng số lượng sách");
         }
 
-        if (book.getCategory() != null) {
-            if (book.getCategory().getId() == null) {
-                throw new IllegalArgumentException("Category id must not be null");
-            }
-            // Resolve relation by id and fail clearly if not found.
-            Category category = categoryRepository.findById(book.getCategory().getId())
-                    .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + book.getCategory().getId()));
-            book.setCategory(category);
-        }
+        // Resolve author
+        Author author = authorRepository.findById(request.getAuthorId())
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + request.getAuthorId()));
+        book.setAuthor(author);
 
-        return bookRepository.save(book);
+        // Resolve category
+        Category category = categoryRepository.findById(request.getCategoryId())
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + request.getCategoryId()));
+        book.setCategory(category);
+
+        Book savedBook = bookRepository.save(book);
+        return convertToResponse(savedBook);
     }
 
-    public Book updateBook(Long id, Book newBook) {
+    public BookResponse updateBook(Long id, BookRequest request) {
         Book oldBook = bookRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + id));
         boolean isChanged = false;
 
         // Update only if the new value is provided and different.
-        if (newBook.getTitle() != null && !Objects.equals(oldBook.getTitle(), newBook.getTitle())) {
-            oldBook.setTitle(newBook.getTitle());
+        if (request.getTitle() != null && !Objects.equals(oldBook.getTitle(), request.getTitle())) {
+            oldBook.setTitle(request.getTitle());
             isChanged = true;
         }
 
-        if (newBook.getDescription() != null && !Objects.equals(oldBook.getDescription(), newBook.getDescription())) {
-            oldBook.setDescription(newBook.getDescription());
+        if (request.getDescription() != null && !Objects.equals(oldBook.getDescription(), request.getDescription())) {
+            oldBook.setDescription(request.getDescription());
             isChanged = true;
         }
 
-        if (newBook.getPublisher() != null && !Objects.equals(oldBook.getPublisher(), newBook.getPublisher())) {
-            oldBook.setPublisher(newBook.getPublisher());
+        if (request.getPublisher() != null && !Objects.equals(oldBook.getPublisher(), request.getPublisher())) {
+            oldBook.setPublisher(request.getPublisher());
             isChanged = true;
         }
 
-        if (newBook.getPublishYear() != null && !Objects.equals(oldBook.getPublishYear(), newBook.getPublishYear())) {
-            oldBook.setPublishYear(newBook.getPublishYear());
+        if (request.getPublishYear() != null && !Objects.equals(oldBook.getPublishYear(), request.getPublishYear())) {
+            oldBook.setPublishYear(request.getPublishYear());
             isChanged = true;
         }
 
-        if (newBook.getQuantity() != null && !Objects.equals(oldBook.getQuantity(), newBook.getQuantity())) {
-            oldBook.setQuantity(newBook.getQuantity());
+        if (request.getQuantity() != null && !Objects.equals(oldBook.getQuantity(), request.getQuantity())) {
+            oldBook.setQuantity(request.getQuantity());
             isChanged = true;
         }
 
-        if (newBook.getAvailableQuantity() != null && !Objects.equals(oldBook.getAvailableQuantity(), newBook.getAvailableQuantity())) {
-            oldBook.setAvailableQuantity(newBook.getAvailableQuantity());
+        if (request.getAvailableQuantity() != null && !Objects.equals(oldBook.getAvailableQuantity(), request.getAvailableQuantity())) {
+            oldBook.setAvailableQuantity(request.getAvailableQuantity());
             isChanged = true;
         }
 
-        if (newBook.getAuthor() != null) {
-            if (newBook.getAuthor().getId() == null) {
-                throw new IllegalArgumentException("Author id must not be null");
-            }
+        // Validate availableQuantity <= quantity
+        if (oldBook.getAvailableQuantity() > oldBook.getQuantity()) {
+            throw new IllegalArgumentException("Số lượng sách còn lại không được lớn hơn tổng số lượng sách");
+        }
 
+        // Update author if authorId provided
+        if (request.getAuthorId() != null) {
             Long oldAuthorId = oldBook.getAuthor() != null ? oldBook.getAuthor().getId() : null;
-            Long newAuthorId = newBook.getAuthor().getId();
-            if (!Objects.equals(oldAuthorId, newAuthorId)) {
-                Author author = authorRepository.findById(newAuthorId)
-                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + newAuthorId));
+            if (!Objects.equals(oldAuthorId, request.getAuthorId())) {
+                Author author = authorRepository.findById(request.getAuthorId())
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + request.getAuthorId()));
                 oldBook.setAuthor(author);
                 isChanged = true;
             }
         }
 
-        if (newBook.getCategory() != null) {
-            if (newBook.getCategory().getId() == null) {
-                throw new IllegalArgumentException("Category id must not be null");
-            }
-
+        // Update category if categoryId provided
+        if (request.getCategoryId() != null) {
             Long oldCategoryId = oldBook.getCategory() != null ? oldBook.getCategory().getId() : null;
-            Long newCategoryId = newBook.getCategory().getId();
-            if (!Objects.equals(oldCategoryId, newCategoryId)) {
-                Category category = categoryRepository.findById(newCategoryId)
-                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + newCategoryId));
+            if (!Objects.equals(oldCategoryId, request.getCategoryId())) {
+                Category category = categoryRepository.findById(request.getCategoryId())
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + request.getCategoryId()));
                 oldBook.setCategory(category);
                 isChanged = true;
             }
         }
 
-        return isChanged ? bookRepository.save(oldBook) : oldBook;
+        Book savedBook = isChanged ? bookRepository.save(oldBook) : oldBook;
+        return convertToResponse(savedBook);
     }
 
     public void deleteBook(Long id) {
@@ -137,22 +146,48 @@ public class BookService {
         bookRepository.deleteById(id);
     }
 
-    public List<Book> searchBooksByTitle(String title) {
+    public List<BookResponse> searchBooksByTitle(String title) {
         if (title == null || title.trim().isEmpty()) {
-            throw new IllegalArgumentException("Title must not be empty");
+            throw new IllegalArgumentException("Tiêu đề sách không được để trống");
         }
-        return bookRepository.findByTitleContainingIgnoreCase(title);
+        return bookRepository.findByTitleContainingIgnoreCase(title)
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    public List<Book> getBooksByAuthorId(Long authorId) {
+    public List<BookResponse> getBooksByAuthorId(Long authorId) {
         authorRepository.findById(authorId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + authorId));
-        return bookRepository.findByAuthorId(authorId);
+        return bookRepository.findByAuthorId(authorId)
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    public List<Book> getBooksByCategoryId(Long categoryId) {
+    public List<BookResponse> getBooksByCategoryId(Long categoryId) {
         categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + categoryId));
-        return bookRepository.findByCategoryId(categoryId);
+        return bookRepository.findByCategoryId(categoryId)
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
+
+    private BookResponse convertToResponse(Book book) {
+        return new BookResponse(
+                book.getId(),
+                book.getTitle(),
+                book.getDescription(),
+                book.getPublisher(),
+                book.getPublishYear(),
+                book.getQuantity(),
+                book.getAvailableQuantity(),
+                book.getAuthor() != null ? book.getAuthor().getId() : null,
+                book.getAuthor() != null ? book.getAuthor().getName() : null,
+                book.getCategory() != null ? book.getCategory().getId() : null,
+                book.getCategory() != null ? book.getCategory().getName() : null,
+                book.getCreatedAt()
+        );
     }
 }

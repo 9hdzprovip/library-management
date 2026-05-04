@@ -1,5 +1,7 @@
 package com.project2.library_management.service;
 
+import com.project2.library_management.dto.request.UserRequest;
+import com.project2.library_management.dto.response.UserResponse;
 import com.project2.library_management.entity.User;
 import com.project2.library_management.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -7,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -17,52 +20,65 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
-    public User getUserById(Long id) {
+    public UserResponse getUserById(Long id) {
         // Do not return null when record is missing.
-        return userRepository.findById(id)
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + id));
+        return convertToResponse(user);
     }
 
-    public User createUser(User user) {
-        return userRepository.save(user);
+    public UserResponse createUser(UserRequest request) {
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(request.getPassword());
+        user.setFullName(request.getFullName());
+        user.setEmail(request.getEmail());
+        user.setRole(request.getRole());
+        
+        User savedUser = userRepository.save(user);
+        return convertToResponse(savedUser);
     }
 
-    public User updateUser(Long id, User newUser) {
+    public UserResponse updateUser(Long id, UserRequest request) {
         User oldUser = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + id));
         boolean isChanged = false;
 
         // Update only if the new value is provided and different.
-        if (newUser.getUsername() != null && !Objects.equals(oldUser.getUsername(), newUser.getUsername())) {
-            oldUser.setUsername(newUser.getUsername());
+        if (request.getUsername() != null && !Objects.equals(oldUser.getUsername(), request.getUsername())) {
+            oldUser.setUsername(request.getUsername());
             isChanged = true;
         }
 
-        if (newUser.getPassword() != null && !Objects.equals(oldUser.getPassword(), newUser.getPassword())) {
-            oldUser.setPassword(newUser.getPassword());
+        if (request.getPassword() != null && !Objects.equals(oldUser.getPassword(), request.getPassword())) {
+            oldUser.setPassword(request.getPassword());
             isChanged = true;
         }
 
-        if (newUser.getFullName() != null && !Objects.equals(oldUser.getFullName(), newUser.getFullName())) {
-            oldUser.setFullName(newUser.getFullName());
+        if (request.getFullName() != null && !Objects.equals(oldUser.getFullName(), request.getFullName())) {
+            oldUser.setFullName(request.getFullName());
             isChanged = true;
         }
 
-        if (newUser.getEmail() != null && !Objects.equals(oldUser.getEmail(), newUser.getEmail())) {
-            oldUser.setEmail(newUser.getEmail());
+        if (request.getEmail() != null && !Objects.equals(oldUser.getEmail(), request.getEmail())) {
+            oldUser.setEmail(request.getEmail());
             isChanged = true;
         }
 
-        if (newUser.getRole() != null && !Objects.equals(oldUser.getRole(), newUser.getRole())) {
-            oldUser.setRole(newUser.getRole());
+        if (request.getRole() != null && !Objects.equals(oldUser.getRole(), request.getRole())) {
+            oldUser.setRole(request.getRole());
             isChanged = true;
         }
 
-        return isChanged ? userRepository.save(oldUser) : oldUser;
+        User savedUser = isChanged ? userRepository.save(oldUser) : oldUser;
+        return convertToResponse(savedUser);
     }
 
     public void deleteUser(Long id) {
@@ -70,5 +86,16 @@ public class UserService {
             throw new NoSuchElementException("Không tìm thấy người dùng với id = " + id);
         }
         userRepository.deleteById(id);
+    }
+
+    private UserResponse convertToResponse(User user) {
+        return new UserResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole(),
+                user.getCreatedAt()
+        );
     }
 }
