@@ -79,6 +79,40 @@ public class BorrowRecordService {
         return borrowRecordRepository.save(borrowRecord);
     }
 
+    @Transactional
+    public BorrowRecord returnBook(Long id) {
+        BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Borrow record not found with id = " + id));
+
+        if (borrowRecord.getStatus() == BorrowStatus.RETURNED) {
+            throw new IllegalArgumentException("Borrow record was already returned");
+        }
+
+        Book book = borrowRecord.getBook();
+        if (book == null) {
+            throw new IllegalArgumentException("Borrow record does not have a book to return");
+        }
+
+        Integer currentAvailableQuantity = book.getAvailableQuantity();
+        Integer bookQuantity = book.getQuantity();
+
+        if (currentAvailableQuantity == null) {
+            currentAvailableQuantity = 0;
+        }
+
+        if (bookQuantity != null && currentAvailableQuantity >= bookQuantity) {
+            throw new IllegalArgumentException("Available quantity cannot be greater than book quantity");
+        }
+
+        book.setAvailableQuantity(currentAvailableQuantity + 1);
+        bookRepository.save(book);
+
+        borrowRecord.setReturnDate(LocalDate.now());
+        borrowRecord.setStatus(BorrowStatus.RETURNED);
+
+        return borrowRecordRepository.save(borrowRecord);
+    }
+
     public BorrowRecord updateBorrowRecord(Long id, BorrowRecord newBorrowRecord) {
         BorrowRecord oldBorrowRecord = borrowRecordRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Borrow record not found with id = " + id));

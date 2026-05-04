@@ -36,6 +36,11 @@ public class BorrowRecordController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(borrowRecordService.borrowBook(request));
 	}
 
+	@PutMapping("/{id}/return")
+	public ResponseEntity<BorrowRecord> returnBook(@PathVariable Long id) {
+		return ResponseEntity.ok(borrowRecordService.returnBook(id));
+	}
+
 	@PutMapping("/{id}")
 	public ResponseEntity<BorrowRecord> updateBorrowRecord(@PathVariable Long id, @RequestBody BorrowRecord borrowRecord) {
 		return ResponseEntity.ok(borrowRecordService.updateBorrowRecord(id, borrowRecord));
