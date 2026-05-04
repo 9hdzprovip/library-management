@@ -2,6 +2,7 @@ package com.project2.library_management.controller;
 
 import com.project2.library_management.entity.Author;
 import com.project2.library_management.service.AuthorService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,12 +32,12 @@ public class AuthorController {
     }
 
     @PostMapping
-    public ResponseEntity<Author> createAuthor(@RequestBody Author author) {
+    public ResponseEntity<Author> createAuthor(@Valid @RequestBody Author author) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authorService.createAuthor(author));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Author> updateAuthor(@PathVariable Long id, @RequestBody Author author) {
+    public ResponseEntity<Author> updateAuthor(@PathVariable Long id, @Valid @RequestBody Author author) {
         return ResponseEntity.ok(authorService.updateAuthor(id, author));
     }
 

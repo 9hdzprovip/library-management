@@ -4,6 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.project2.library_management.enums.UserRole;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -15,16 +18,22 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotBlank(message = "Username must not be empty")
     private String username;
 
-
+    @NotBlank(message = "Password must not be empty")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
+    @NotBlank(message = "Full name must not be empty")
     @Column(name = "full_name")
     private String fullName;
+
+    @Email(message = "Email must be valid")
     private String email;
 
+    @NotNull(message = "Role must not be null")
     @Enumerated(EnumType.STRING)
     private UserRole role;
 

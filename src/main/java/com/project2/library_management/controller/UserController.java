@@ -2,6 +2,7 @@ package com.project2.library_management.controller;
 
 import com.project2.library_management.entity.User;
 import com.project2.library_management.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,12 +32,12 @@ public class UserController {
 	}
 
 	@PostMapping
-	public ResponseEntity<User> createUser(@RequestBody User user) {
+	public ResponseEntity<User> createUser(@Valid @RequestBody User user) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(user));
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
+	public ResponseEntity<User> updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
 		return ResponseEntity.ok(userService.updateUser(id, user));
 	}
 

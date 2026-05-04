@@ -2,6 +2,9 @@ package com.project2.library_management.entity;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +18,7 @@ public class Book {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "Title must not be empty")
     private String title;
 
     private String description;
@@ -24,15 +28,19 @@ public class Book {
     @Column(name = "publish_year")
     private Integer publishYear;
 
+    @Min(value = 0, message = "Quantity must be >= 0")
     private Integer quantity;
 
+    @Min(value = 0, message = "Available quantity must be >= 0")
     @Column(name = "available_quantity")
     private Integer availableQuantity;
 
+    @NotNull(message = "Author must not be null")
     @ManyToOne
     @JoinColumn(name = "author_id")
     private Author author;
 
+    @NotNull(message = "Category must not be null")
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;

@@ -3,6 +3,7 @@ package com.project2.library_management.controller;
 import com.project2.library_management.dto.BorrowBookRequest;
 import com.project2.library_management.entity.BorrowRecord;
 import com.project2.library_management.service.BorrowRecordService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +43,7 @@ public class BorrowRecordController {
 	}
 
 	@PostMapping("/borrow")
-	public ResponseEntity<BorrowRecord> borrowBook(@RequestBody BorrowBookRequest request) {
+	public ResponseEntity<BorrowRecord> borrowBook(@Valid @RequestBody BorrowBookRequest request) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(borrowRecordService.borrowBook(request));
 	}
 

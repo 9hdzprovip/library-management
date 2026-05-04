@@ -2,6 +2,7 @@ package com.project2.library_management.controller;
 
 import com.project2.library_management.entity.Book;
 import com.project2.library_management.service.BookService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -46,12 +47,12 @@ public class BookController {
     }
 
     @PostMapping
-    public ResponseEntity<Book> createBook(@RequestBody Book book) {
+    public ResponseEntity<Book> createBook(@Valid @RequestBody Book book) {
         return ResponseEntity.status(HttpStatus.CREATED).body(bookService.createBook(book));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Book> updateBook(@PathVariable Long id, @RequestBody Book book) {
+    public ResponseEntity<Book> updateBook(@PathVariable Long id, @Valid @RequestBody Book book) {
         return ResponseEntity.ok(bookService.updateBook(id, book));
     }
 
