@@ -205,4 +205,20 @@ public class BorrowRecordService {
         borrowRecordRepository.deleteById(id);
         return "Xoa borrow record thanh cong";
     }
+
+    public List<BorrowRecord> getBorrowRecordsByUserId(Long userId) {
+        userRepository.findById(userId)
+                .orElseThrow(() -> new NoSuchElementException("User not found with id = " + userId));
+        return borrowRecordRepository.findByUserId(userId);
+    }
+
+    public List<BorrowRecord> getBorrowRecordsByStatus(String statusStr) {
+        BorrowStatus status;
+        try {
+            status = BorrowStatus.valueOf(statusStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid status: " + statusStr + ". Valid values are: BORROWED, RETURNED, OVERDUE");
+        }
+        return borrowRecordRepository.findByStatus(status);
+    }
 }

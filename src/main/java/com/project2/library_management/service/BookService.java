@@ -138,4 +138,23 @@ public class BookService {
         bookRepository.deleteById(id);
         return "Xoa book thanh cong";
     }
+
+    public List<Book> searchBooksByTitle(String title) {
+        if (title == null || title.trim().isEmpty()) {
+            throw new IllegalArgumentException("Title must not be empty");
+        }
+        return bookRepository.findByTitleContainingIgnoreCase(title);
+    }
+
+    public List<Book> getBooksByAuthorId(Long authorId) {
+        authorRepository.findById(authorId)
+                .orElseThrow(() -> new NoSuchElementException("Author not found with id = " + authorId));
+        return bookRepository.findByAuthorId(authorId);
+    }
+
+    public List<Book> getBooksByCategoryId(Long categoryId) {
+        categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NoSuchElementException("Category not found with id = " + categoryId));
+        return bookRepository.findByCategoryId(categoryId);
+    }
 }

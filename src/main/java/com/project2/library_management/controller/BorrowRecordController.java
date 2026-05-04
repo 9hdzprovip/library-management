@@ -26,6 +26,16 @@ public class BorrowRecordController {
 		return ResponseEntity.ok(borrowRecordService.getAllBorrowRecords());
 	}
 
+	@GetMapping("/status/{status}")
+	public ResponseEntity<List<BorrowRecord>> getBorrowRecordsByStatus(@PathVariable String status) {
+		return ResponseEntity.ok(borrowRecordService.getBorrowRecordsByStatus(status));
+	}
+
+	@GetMapping("/user/{userId}")
+	public ResponseEntity<List<BorrowRecord>> getBorrowRecordsByUserId(@PathVariable Long userId) {
+		return ResponseEntity.ok(borrowRecordService.getBorrowRecordsByUserId(userId));
+	}
+
 	@GetMapping("/{id}")
 	public ResponseEntity<BorrowRecord> getBorrowRecordById(@PathVariable Long id) {
 		return ResponseEntity.ok(borrowRecordService.getBorrowRecordById(id));
