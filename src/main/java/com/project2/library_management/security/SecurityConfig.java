@@ -44,7 +44,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/categories/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/borrow-records").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/borrow-records/**").hasRole("ADMIN")
+                        // Allow both USER and ADMIN to view their own borrow records
+                        .requestMatchers(HttpMethod.GET, "/borrow-records/my").hasAnyRole("ADMIN","USER")
+                        // ADMIN endpoints for borrow records
+                        .requestMatchers(HttpMethod.GET, "/borrow-records").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/borrow-records/{id}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/borrow-records/user/{userId}").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/borrow-records/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/borrow-records/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/borrow-records/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/borrow-records/update-overdue").hasRole("ADMIN")
                         .anyRequest().authenticated()

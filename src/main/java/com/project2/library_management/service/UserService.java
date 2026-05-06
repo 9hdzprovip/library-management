@@ -10,14 +10,17 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<UserResponse> getAllUsers() {
@@ -37,7 +40,9 @@ public class UserService {
     public UserResponse createUser(UserRequest request) {
         User user = new User();
         user.setUsername(request.getUsername());
-        user.setPassword(request.getPassword());
+        if (request.getPassword() != null) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
         user.setFullName(request.getFullName());
         user.setEmail(request.getEmail());
         user.setRole(request.getRole());
@@ -57,8 +62,9 @@ public class UserService {
             isChanged = true;
         }
 
-        if (request.getPassword() != null && !Objects.equals(oldUser.getPassword(), request.getPassword())) {
-            oldUser.setPassword(request.getPassword());
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            // Only update password if a new password is provided; encode it before saving
+            oldUser.setPassword(passwordEncoder.encode(request.getPassword()));
             isChanged = true;
         }
 

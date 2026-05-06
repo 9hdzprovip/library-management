@@ -224,6 +224,16 @@ public class BorrowRecordService {
                 .collect(Collectors.toList());
     }
 
+        public List<BorrowRecordResponse> getMyBorrowRecords(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng"));
+
+        return borrowRecordRepository.findByUserId(user.getId())
+            .stream()
+            .map(this::convertToResponse)
+            .collect(Collectors.toList());
+        }
+
     public List<BorrowRecordResponse> getBorrowRecordsByStatus(String statusStr) {
         BorrowStatus status;
         try {
