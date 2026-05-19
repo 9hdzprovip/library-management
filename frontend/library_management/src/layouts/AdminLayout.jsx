@@ -9,7 +9,7 @@ function AdminLayout() {
       <Sidebar />
       <div className="admin-layout__main">
         <Header />
-        <main>
+        <main className="admin-layout__content">
           <Outlet />
         </main>
       </div>

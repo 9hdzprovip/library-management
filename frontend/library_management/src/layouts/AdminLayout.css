@@ -5,10 +5,23 @@
 }
 
 .admin-layout__main {
+  display: flex;
   flex: 1;
+  flex-direction: column;
   min-width: 0;
 }
 
-.admin-layout main {
-  padding: 24px;
+.admin-layout__content {
+  flex: 1;
+  padding: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .admin-layout__content {
+    padding: var(--space-4);
+  }
 }

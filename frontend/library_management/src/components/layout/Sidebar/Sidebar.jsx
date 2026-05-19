@@ -3,20 +3,32 @@ import './Sidebar.css';
 
 const navItems = [
   { label: 'Dashboard', to: '/' },
-  { label: 'Books', to: '/books' },
-  { label: 'Authors', to: '/authors' },
-  { label: 'Categories', to: '/categories' },
-  { label: 'Users', to: '/users' },
-  { label: 'Borrow Records', to: '/borrow-records' },
+  { label: 'Quản lý sách', to: '/books' },
+  { label: 'Quản lý tác giả', to: '/authors' },
+  { label: 'Quản lý danh mục', to: '/categories' },
+  { label: 'Quản lý người dùng', to: '/users' },
+  { label: 'Quản lý mượn trả', to: '/borrow-records' },
 ];
 
 function Sidebar() {
   return (
     <aside className="sidebar">
-      <h1>Library</h1>
-      <nav>
+      <div className="sidebar__brand">
+        <span className="sidebar__logo">LM</span>
+        <div>
+          <h1>Library</h1>
+          <p>Admin dashboard</p>
+        </div>
+      </div>
+
+      <nav className="sidebar__nav">
         {navItems.map((item) => (
-          <NavLink key={item.to} to={item.to}>
+          <NavLink
+            end={item.to === '/'}
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) => (isActive ? 'sidebar__link sidebar__link--active' : 'sidebar__link')}
+          >
             {item.label}
           </NavLink>
         ))}

@@ -1,11 +1,19 @@
 import './Header.css';
 
-function Header({ title = 'Dashboard' }) {
+function Header() {
   return (
     <header className="header">
-      <div>
-        <p>Admin</p>
-        <h2>{title}</h2>
+      <div className="header__title">
+        <h2>Library Management</h2>
+        <p>Quản trị hệ thống thư viện</p>
+      </div>
+
+      <div className="header__user">
+        <span className="header__avatar">A</span>
+        <div>
+          <p>User</p>
+          <strong>Admin</strong>
+        </div>
       </div>
     </header>
   );
