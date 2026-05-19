@@ -6,3 +6,8 @@
   min-height: 100vh;
   padding: 24px;
 }
+
+/* subtle page background and center card wrapper */
+body { background: linear-gradient(180deg, #f7fbff 0%, var(--color-background, #f3f4f6) 100%); }
+
+.auth-layout { background: transparent; }
