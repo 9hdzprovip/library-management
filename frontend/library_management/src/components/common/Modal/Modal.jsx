@@ -1,20 +1,26 @@
 import './Modal.css';
 
-function Modal({ children, isOpen, onClose, title }) {
+function Modal({ title, isOpen, onClose, children }) {
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className="modal-backdrop" role="presentation" onClick={onClose}>
-      <section className="modal" role="dialog" aria-modal="true" aria-label={title} onClick={(event) => event.stopPropagation()}>
+    <div className="modal-overlay" role="presentation" onClick={onClose}>
+      <section
+        aria-label={title}
+        aria-modal="true"
+        className="modal"
+        role="dialog"
+        onClick={(event) => event.stopPropagation()}
+      >
         <header className="modal__header">
           <h2>{title}</h2>
-          <button aria-label="Close modal" type="button" onClick={onClose}>
-            x
+          <button className="modal__close" aria-label="Close modal" type="button" onClick={onClose}>
+            &times;
           </button>
         </header>
-        {children}
+        <div className="modal__body">{children}</div>
       </section>
     </div>
   );

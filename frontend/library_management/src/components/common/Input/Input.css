@@ -1,19 +1,33 @@
 .input-field {
   display: grid;
-  gap: 6px;
+  gap: var(--space-2);
   text-align: left;
 }
 
-.input-field span {
+.input-field__label {
   color: var(--color-muted);
   font-size: 14px;
+  font-weight: 600;
 }
 
-.input-field input,
-.input-field select,
-.input-field textarea {
+.input-field input {
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
+  color: var(--color-text);
   font: inherit;
   padding: 10px 12px;
+  width: 100%;
+}
+
+.input-field input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  outline: none;
+}
+
+.input-field__error {
+  color: var(--color-danger);
+  font-size: 13px;
+  margin: 0;
 }

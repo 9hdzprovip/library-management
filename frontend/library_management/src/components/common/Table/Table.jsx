@@ -1,6 +1,6 @@
 import './Table.css';
 
-function Table({ columns = [], data = [], rowKey = 'id' }) {
+function Table({ columns = [], data = [], renderActions }) {
   return (
     <div className="table-wrap">
       <table className="table">
@@ -9,16 +9,26 @@ function Table({ columns = [], data = [], rowKey = 'id' }) {
             {columns.map((column) => (
               <th key={column.key}>{column.label}</th>
             ))}
+            {renderActions && <th className="table__actions-header">Actions</th>}
           </tr>
         </thead>
         <tbody>
-          {data.map((row, index) => (
-            <tr key={row[rowKey] ?? index}>
-              {columns.map((column) => (
-                <td key={column.key}>{column.render ? column.render(row) : row[column.key]}</td>
-              ))}
+          {data.length > 0 ? (
+            data.map((row, index) => (
+              <tr key={row.id ?? index}>
+                {columns.map((column) => (
+                  <td key={column.key}>{row[column.key]}</td>
+                ))}
+                {renderActions && <td className="table__actions">{renderActions(row)}</td>}
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td className="table__empty" colSpan={columns.length + (renderActions ? 1 : 0)}>
+                No data available.
+              </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>

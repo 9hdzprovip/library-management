@@ -1,11 +1,35 @@
 import './Input.css';
 
-function Input({ label, id, className = '', ...props }) {
+function Input({
+  label,
+  name,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+  error,
+  ...props
+}) {
+  const inputId = props.id || name;
+
   return (
-    <label className={`input-field ${className}`.trim()} htmlFor={id}>
-      {label && <span>{label}</span>}
-      <input id={id} {...props} />
-    </label>
+    <div className="input-field">
+      {label && (
+        <label className="input-field__label" htmlFor={inputId}>
+          {label}
+        </label>
+      )}
+      <input
+        id={inputId}
+        name={name}
+        onChange={onChange}
+        placeholder={placeholder}
+        type={type}
+        value={value}
+        {...props}
+      />
+      {error && <p className="input-field__error">{error}</p>}
+    </div>
   );
 }
 
