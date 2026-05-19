@@ -1,0 +1,19 @@
+.input-field {
+  display: grid;
+  gap: 6px;
+  text-align: left;
+}
+
+.input-field span {
+  color: var(--color-muted);
+  font-size: 14px;
+}
+
+.input-field input,
+.input-field select,
+.input-field textarea {
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  font: inherit;
+  padding: 10px 12px;
+}

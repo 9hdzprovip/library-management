@@ -79,3 +79,4 @@ CREATE TABLE borrow_records (
     CONSTRAINT chk_return_date_valid
         CHECK (return_date IS NULL OR return_date >= borrow_date)
 );
+TRUNCATE TABLE borrow_records, books, authors, categories, users RESTART IDENTITY CASCADE;

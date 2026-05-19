@@ -1,0 +1,14 @@
+.admin-layout {
+  background: var(--color-background);
+  display: flex;
+  min-height: 100vh;
+}
+
+.admin-layout__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-layout main {
+  padding: 24px;
+}

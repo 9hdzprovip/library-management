@@ -1,0 +1,21 @@
+.table-wrap {
+  overflow-x: auto;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.table th,
+.table td {
+  border-bottom: 1px solid var(--color-border);
+  padding: 12px;
+  text-align: left;
+}
+
+.table th {
+  color: var(--color-muted);
+  font-size: 13px;
+  text-transform: uppercase;
+}
