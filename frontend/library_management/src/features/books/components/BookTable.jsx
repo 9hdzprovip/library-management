@@ -1,13 +1,28 @@
 import Table from '../../../components/common/Table/Table';
+import Button from '../../../components/common/Button/Button';
 
 const columns = [
-  { key: 'title', label: 'Title' },
-  { key: 'isbn', label: 'ISBN' },
-  { key: 'quantity', label: 'Quantity' },
+  { key: 'id', label: 'ID' },
+  { key: 'title', label: 'Tiêu đề' },
+  { key: 'publisher', label: 'Nhà xuất bản' },
+  { key: 'publishYear', label: 'Năm' },
+  { key: 'quantity', label: 'Tổng' },
+  { key: 'availableQuantity', label: 'Còn' },
+  { key: 'authorName', label: 'Tác giả' },
+  { key: 'categoryName', label: 'Danh mục' },
 ];
 
-function BookTable({ books = [] }) {
-  return <Table columns={columns} data={books} />;
+function BookTable({ books = [], loading = false, onEdit, onDelete }) {
+  function renderActions(row) {
+    return (
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Button variant="secondary" onClick={() => onEdit && onEdit(row)}>Sửa</Button>
+        <Button variant="danger" onClick={() => onDelete && onDelete(row)}>Xóa</Button>
+      </div>
+    );
+  }
+
+  return <Table columns={columns} data={books} renderActions={renderActions} />;
 }
 
 export default BookTable;
