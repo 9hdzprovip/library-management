@@ -1,12 +1,89 @@
+.flex {
+  display: flex;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-1 {
+  margin-top: var(--space-1);
+}
+
+.mt-2 {
+  margin-top: var(--space-2);
+}
+
+.mt-3 {
+  margin-top: var(--space-3);
+}
+
+.mt-4 {
+  margin-top: var(--space-4);
+}
+
+.mb-1 {
+  margin-bottom: var(--space-1);
+}
+
+.mb-2 {
+  margin-bottom: var(--space-2);
+}
+
+.mb-3 {
+  margin-bottom: var(--space-3);
+}
+
+.mb-4 {
+  margin-bottom: var(--space-4);
+}
+
 .page-header {
   align-items: center;
   display: flex;
-  gap: 16px;
+  gap: var(--space-4);
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .stack {
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
+}
+
+.badge {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 6px 10px;
+}
+
+.badge-success {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.badge-danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.badge-warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
+.badge-primary {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
 }
