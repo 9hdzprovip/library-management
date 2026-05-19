@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import AdminLayout from '../layouts/AdminLayout';
 import AuthLayout from '../layouts/AuthLayout';
 import AuthorPage from '../features/authors/pages/AuthorPage';
@@ -17,7 +17,7 @@ function AppRoutes() {
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
         </Route>
-        <Route element={<AdminLayout />}>
+        <Route path="/" element={<AdminLayout />}>
           <Route index element={<DashboardPage />} />
           <Route path="books" element={<BookPage />} />
           <Route path="authors" element={<AuthorPage />} />
@@ -25,8 +25,7 @@ function AppRoutes() {
           <Route path="users" element={<UserPage />} />
           <Route path="borrow-records" element={<BorrowRecordPage />} />
         </Route>
-        <Route path="/404" element={<NotFoundPage />} />
-        <Route path="*" element={<Navigate to="/404" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   );
