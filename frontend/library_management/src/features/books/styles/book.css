@@ -15,5 +15,20 @@
 .book-form__row { display:flex; gap:8px; }
 .book-form__actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
 
-.table-wrap { margin-top: 12px; }
+.book-page__error {
+  color: var(--danger, #ef4444);
+  margin: 16px 0 0;
+}
 
+.book-page__error--modal {
+  margin: 0 0 12px;
+}
+
+.book-page__loading {
+  color: var(--color-muted);
+  margin: 0;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.table-wrap { margin-top: 12px; }

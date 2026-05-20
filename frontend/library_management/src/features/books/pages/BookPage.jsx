@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import BookSearch from '../components/BookSearch';
 import BookTable from '../components/BookTable';
 import BookForm from '../components/BookForm';
@@ -9,81 +9,143 @@ import * as bookApi from '../../../api/bookApi';
 import * as authorApi from '../../../api/authorApi';
 import * as categoryApi from '../../../api/categoryApi';
 
+function getErrorMessage(error, fallback) {
+  return error?.message || fallback;
+}
+
 function BookPage() {
   const [books, setBooks] = useState([]);
   const [authors, setAuthors] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({ title: '', authorId: '', categoryId: '' });
+  const [error, setError] = useState('');
+  const [searchTitle, setSearchTitle] = useState('');
+  const [selectedAuthorId, setSelectedAuthorId] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [editingBook, setEditingBook] = useState(null);
+
+  const loadBooks = useCallback(async (filters = {}) => {
+    const title = (filters.searchTitle ?? searchTitle).trim();
+    const authorId = filters.selectedAuthorId ?? selectedAuthorId;
+    const categoryId = filters.selectedCategoryId ?? selectedCategoryId;
+
+    try {
+      setLoading(true);
+      setError('');
+
+      let data;
+      if (title) {
+        data = await bookApi.searchByTitle(title);
+      } else if (authorId) {
+        data = await bookApi.getByAuthor(authorId);
+      } else if (categoryId) {
+        data = await bookApi.getByCategory(categoryId);
+      } else {
+        data = await bookApi.getAll();
+      }
+
+      setBooks(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể tải danh sách sách.'));
+    } finally {
+      setLoading(false);
+    }
+  }, [searchTitle, selectedAuthorId, selectedCategoryId]);
 
   useEffect(() => {
-    setLoading(true);
-    Promise.all([bookApi.fetchBooks(), authorApi.fetchAuthors(), categoryApi.fetchCategories()]).then(
-      ([b, a, c]) => {
-        setBooks(b);
-        setAuthors(a);
-        setCategories(c);
+    async function loadInitialData() {
+      try {
+        setLoading(true);
+        setError('');
+        const [bookData, authorData, categoryData] = await Promise.all([
+          bookApi.getAll(),
+          authorApi.getAll(),
+          categoryApi.getAll(),
+        ]);
+
+        setBooks(Array.isArray(bookData) ? bookData : []);
+        setAuthors(Array.isArray(authorData) ? authorData : []);
+        setCategories(Array.isArray(categoryData) ? categoryData : []);
+      } catch (err) {
+        setError(getErrorMessage(err, 'Không thể tải dữ liệu quản lý sách.'));
+      } finally {
         setLoading(false);
       }
-    );
+    }
+
+    loadInitialData();
   }, []);
 
   const enriched = useMemo(() => {
     return books.map((b) => ({
       ...b,
-      authorName: authors.find((x) => x.id === b.authorId)?.name || '',
-      categoryName: categories.find((x) => x.id === b.categoryId)?.name || '',
+      authorName: b.authorName || authors.find((x) => Number(x.id) === Number(b.authorId))?.name || '',
+      categoryName: b.categoryName || categories.find((x) => Number(x.id) === Number(b.categoryId))?.name || '',
     }));
   }, [books, authors, categories]);
 
-  const filtered = useMemo(() => {
-    const q = (filters.title || '').trim().toLowerCase();
-    return enriched.filter((b) => {
-      if (q && !b.title.toLowerCase().includes(q)) return false;
-      if (filters.authorId && Number(filters.authorId) !== Number(b.authorId)) return false;
-      if (filters.categoryId && Number(filters.categoryId) !== Number(b.categoryId)) return false;
-      return true;
-    });
-  }, [enriched, filters]);
-
   function handleSearchChange(next) {
-    setFilters(next);
+    const nextSearchTitle = next.title || '';
+    const nextAuthorId = next.authorId || '';
+    const nextCategoryId = next.categoryId || '';
+
+    setSearchTitle(nextSearchTitle);
+    setSelectedAuthorId(nextAuthorId);
+    setSelectedCategoryId(nextCategoryId);
+    loadBooks({
+      searchTitle: nextSearchTitle,
+      selectedAuthorId: nextAuthorId,
+      selectedCategoryId: nextCategoryId,
+    });
   }
 
   function openAdd() {
-    setEditing(null);
+    setError('');
+    setEditingBook(null);
     setIsModalOpen(true);
   }
 
   function openEdit(book) {
-    setEditing(book);
+    setError('');
+    setEditingBook(book);
     setIsModalOpen(true);
   }
 
   function closeModal() {
     setIsModalOpen(false);
-    setEditing(null);
+    setEditingBook(null);
   }
 
   async function handleSave(payload) {
-    if (editing) {
-      const updated = await bookApi.updateBook(editing.id, payload);
-      setBooks((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    } else {
-      const created = await bookApi.createBook(payload);
-      setBooks((prev) => [created, ...prev]);
+    try {
+      setError('');
+
+      if (editingBook) {
+        await bookApi.update(editingBook.id, payload);
+      } else {
+        await bookApi.create(payload);
+      }
+
+      closeModal();
+      await loadBooks();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể lưu thông tin sách.'));
     }
-    closeModal();
   }
 
   async function handleDelete(book) {
-    setBooks((prev) => prev.filter((b) => b.id !== book.id));
+    const confirmed = window.confirm(`Bạn có chắc muốn xóa sách "${book.title}"?`);
+    if (!confirmed) {
+      return;
+    }
+
     try {
-      await bookApi.deleteBook(book.id);
-    } catch (e) {
-      setBooks((prev) => [book, ...prev]);
+      setError('');
+      await bookApi.delete(book.id);
+      await loadBooks();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể xóa sách.'));
     }
   }
 
@@ -100,12 +162,20 @@ function BookPage() {
         </div>
       </div>
 
-      <BookSearch filters={filters} onChange={handleSearchChange} authors={authors} categories={categories} />
+      <BookSearch
+        filters={{ title: searchTitle, authorId: selectedAuthorId, categoryId: selectedCategoryId }}
+        onChange={handleSearchChange}
+        authors={authors}
+        categories={categories}
+      />
 
-      <BookTable books={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} />
+      {error && !isModalOpen && <p className="book-page__error">{error}</p>}
 
-      <Modal title={editing ? 'Sửa sách' : 'Thêm sách'} isOpen={isModalOpen} onClose={closeModal}>
-        <BookForm initialData={editing} onSave={handleSave} onCancel={closeModal} authors={authors} categories={categories} />
+      <BookTable books={enriched} loading={loading} onEdit={openEdit} onDelete={handleDelete} />
+
+      <Modal title={editingBook ? 'Sửa sách' : 'Thêm sách'} isOpen={isModalOpen} onClose={closeModal}>
+        {error && <p className="book-page__error book-page__error--modal">{error}</p>}
+        <BookForm initialData={editingBook} onSave={handleSave} onCancel={closeModal} authors={authors} categories={categories} />
       </Modal>
     </section>
   );
