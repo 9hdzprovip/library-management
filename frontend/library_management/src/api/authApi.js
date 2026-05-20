@@ -1,6 +1,16 @@
 import axiosClient from './axiosClient';
 
-export const authApi = {
-  login: (payload) => axiosClient.post('/auth/login', payload),
-  register: (payload) => axiosClient.post('/auth/register', payload),
+export const login = (data) => {
+  return axiosClient.post('/auth/login', data);
 };
+
+export const register = (data) => {
+  return axiosClient.post('/auth/register', data);
+};
+
+const authApi = {
+  login,
+  register,
+};
+
+export default authApi;
