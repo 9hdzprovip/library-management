@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import AuthorTable from '../components/AuthorTable';
 import AuthorForm from '../components/AuthorForm';
 import Modal from '../../../components/common/Modal/Modal';
@@ -7,61 +7,87 @@ import Input from '../../../components/common/Input/Input';
 import * as authorApi from '../../../api/authorApi';
 import '../styles/author.css';
 
+function getErrorMessage(error, fallback) {
+  return error?.message || fallback;
+}
+
 function AuthorPage() {
   const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [search, setSearch] = useState('');
+  const [editingAuthor, setEditingAuthor] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    authorApi.fetchAuthors().then((data) => {
-      setAuthors(data);
+  const loadAuthors = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await authorApi.getAll();
+      setAuthors(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể tải danh sách tác giả.'));
+    } finally {
       setLoading(false);
-    });
+    }
   }, []);
 
+  useEffect(() => {
+    loadAuthors();
+  }, [loadAuthors]);
+
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = searchTerm.trim().toLowerCase();
     if (!q) return authors;
-    return authors.filter((a) => a.name.toLowerCase().includes(q));
-  }, [authors, search]);
+    return authors.filter((author) => author.name?.toLowerCase().includes(q));
+  }, [authors, searchTerm]);
 
   function openAdd() {
-    setEditing(null);
+    setError('');
+    setEditingAuthor(null);
     setIsModalOpen(true);
   }
 
   function openEdit(author) {
-    setEditing(author);
+    setError('');
+    setEditingAuthor(author);
     setIsModalOpen(true);
   }
 
   function closeModal() {
     setIsModalOpen(false);
-    setEditing(null);
+    setEditingAuthor(null);
   }
 
   async function handleSave(authorData) {
-    if (editing) {
-      const updated = await authorApi.updateAuthor(editing.id, authorData);
-      setAuthors((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    } else {
-      const created = await authorApi.createAuthor(authorData);
-      setAuthors((prev) => [created, ...prev]);
+    try {
+      setError('');
+
+      if (editingAuthor) {
+        await authorApi.update(editingAuthor.id, authorData);
+      } else {
+        await authorApi.create(authorData);
+      }
+
+      closeModal();
+      await loadAuthors();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể lưu thông tin tác giả.'));
     }
-    closeModal();
   }
 
   async function handleDelete(author) {
-    // optimistic update
-    setAuthors((prev) => prev.filter((a) => a.id !== author.id));
+    const confirmed = window.confirm(`Bạn có chắc muốn xóa tác giả "${author.name}"?`);
+    if (!confirmed) {
+      return;
+    }
+
     try {
-      await authorApi.deleteAuthor(author.id);
-    } catch (e) {
-      // rollback on error
-      setAuthors((prev) => [author, ...prev]);
+      setError('');
+      await authorApi.delete(author.id);
+      await loadAuthors();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể xóa tác giả.'));
     }
   }
 
@@ -76,12 +102,14 @@ function AuthorPage() {
         <div className="page-actions">
           <Input
             placeholder="Tìm theo tên tác giả..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Button onClick={openAdd} variant="primary">Thêm tác giả</Button>
         </div>
       </div>
+
+      {error && !isModalOpen && <p className="author-page__error">{error}</p>}
 
       <AuthorTable
         authors={filtered}
@@ -90,8 +118,9 @@ function AuthorPage() {
         onDelete={handleDelete}
       />
 
-      <Modal title={editing ? 'Sửa tác giả' : 'Thêm tác giả'} isOpen={isModalOpen} onClose={closeModal}>
-        <AuthorForm initialData={editing} onCancel={closeModal} onSave={handleSave} />
+      <Modal title={editingAuthor ? 'Sửa tác giả' : 'Thêm tác giả'} isOpen={isModalOpen} onClose={closeModal}>
+        {error && <p className="author-page__error author-page__error--modal">{error}</p>}
+        <AuthorForm initialData={editingAuthor} onCancel={closeModal} onSave={handleSave} />
       </Modal>
     </section>
   );
