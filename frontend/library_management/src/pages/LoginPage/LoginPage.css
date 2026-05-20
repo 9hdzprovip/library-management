@@ -17,6 +17,22 @@
 .login-page__brand { text-align: center; }
 .login-page__subtitle { margin: 4px 0 0; color: var(--muted, #6b7280); }
 .login-page__error { color: var(--danger, #ef4444); margin: 0; }
+.login-page__switch {
+  color: var(--color-muted);
+  font-size: 14px;
+  margin: 0;
+  text-align: center;
+}
+
+.login-page__switch a {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.login-page__switch a:hover {
+  text-decoration: underline;
+}
 
 @media (max-width: 480px) {
   .login-page { padding: 18px; max-width: 100%; }

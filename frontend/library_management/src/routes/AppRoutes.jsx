@@ -9,6 +9,7 @@ import UserPage from '../features/users/pages/UserPage';
 import DashboardPage from '../pages/DashboardPage/DashboardPage';
 import LoginPage from '../pages/LoginPage/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage/NotFoundPage';
+import RegisterPage from '../pages/RegisterPage/RegisterPage';
 
 function AppRoutes() {
   return (
@@ -16,6 +17,7 @@ function AppRoutes() {
       <Routes>
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
         </Route>
         <Route path="/" element={<AdminLayout />}>
           <Route index element={<DashboardPage />} />
