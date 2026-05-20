@@ -11,6 +11,14 @@ function getErrorMessage(error, fallback) {
   return error?.message || fallback;
 }
 
+function sortById(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return [...data].sort((a, b) => Number(a.id) - Number(b.id));
+}
+
 function CategoryPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +32,7 @@ function CategoryPage() {
       setLoading(true);
       setError('');
       const data = await categoryApi.getAll();
-      setCategories(Array.isArray(data) ? data : []);
+      setCategories(sortById(data));
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể tải danh sách danh mục.'));
     } finally {

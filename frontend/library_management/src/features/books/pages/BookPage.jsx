@@ -13,6 +13,14 @@ function getErrorMessage(error, fallback) {
   return error?.message || fallback;
 }
 
+function sortById(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return [...data].sort((a, b) => Number(a.id) - Number(b.id));
+}
+
 function BookPage() {
   const [books, setBooks] = useState([]);
   const [authors, setAuthors] = useState([]);
@@ -45,7 +53,7 @@ function BookPage() {
         data = await bookApi.getAll();
       }
 
-      setBooks(Array.isArray(data) ? data : []);
+      setBooks(sortById(data));
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể tải danh sách sách.'));
     } finally {
@@ -64,9 +72,9 @@ function BookPage() {
           categoryApi.getAll(),
         ]);
 
-        setBooks(Array.isArray(bookData) ? bookData : []);
-        setAuthors(Array.isArray(authorData) ? authorData : []);
-        setCategories(Array.isArray(categoryData) ? categoryData : []);
+        setBooks(sortById(bookData));
+        setAuthors(sortById(authorData));
+        setCategories(sortById(categoryData));
       } catch (err) {
         setError(getErrorMessage(err, 'Không thể tải dữ liệu quản lý sách.'));
       } finally {

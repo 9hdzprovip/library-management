@@ -11,6 +11,14 @@ function getErrorMessage(error, fallback) {
   return error?.message || fallback;
 }
 
+function sortById(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return [...data].sort((a, b) => Number(a.id) - Number(b.id));
+}
+
 function AuthorPage() {
   const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -24,7 +32,7 @@ function AuthorPage() {
       setLoading(true);
       setError('');
       const data = await authorApi.getAll();
-      setAuthors(Array.isArray(data) ? data : []);
+      setAuthors(sortById(data));
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể tải danh sách tác giả.'));
     } finally {
