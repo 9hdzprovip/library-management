@@ -8,6 +8,12 @@ const axiosClient = axios.create({
 });
 
 axiosClient.interceptors.request.use((config) => {
+  const isAuthRequest = config.url?.startsWith('/auth/');
+
+  if (isAuthRequest) {
+    return config;
+  }
+
   const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
 
   if (token) {
@@ -20,6 +26,13 @@ axiosClient.interceptors.request.use((config) => {
 axiosClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    if (!error.response) {
+      return Promise.reject({
+        status: 0,
+        message: 'Không kết nối được backend. Vui lòng kiểm tra server hoặc CORS.',
+      });
+    }
+
     const status = error.response?.status || 500;
     const backendMessage = error.response?.data?.message;
 

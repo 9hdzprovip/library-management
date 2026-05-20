@@ -1,28 +1,59 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Button from '../../components/common/Button/Button';
 import Input from '../../components/common/Input/Input';
 import './LoginPage.css';
 import * as authApi from '../../api/authApi';
 
+const loginErrorMessages = {
+  0: 'Không kết nối được backend. Vui lòng kiểm tra backend đang chạy và cấu hình CORS.',
+  400: 'Thông tin đăng nhập không hợp lệ.',
+  401: 'Tên đăng nhập hoặc mật khẩu không đúng.',
+  403: 'Tài khoản không có quyền truy cập.',
+  500: 'Máy chủ đang gặp lỗi. Vui lòng thử lại sau.',
+};
+
 function LoginPage() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem('token')) {
+      navigate('/', { replace: true });
+    }
+  }, [navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setError('');
+
     if (!username.trim()) return setError('Username không được để trống');
     if (!password) return setError('Password không được để trống');
 
     const payload = { username: username.trim(), password };
-    console.log('Login submit:', payload);
 
-    // prepared for real API call
     try {
+      setIsLoading(true);
       const res = await authApi.login(payload);
-      console.log('authApi.login ->', res);
+      const loginData = res?.data || res;
+
+      if (!loginData?.token) {
+        setError('Đăng nhập thất bại. Backend không trả về token.');
+        return;
+      }
+
+      localStorage.setItem('token', loginData.token);
+      localStorage.setItem('username', loginData.username || payload.username);
+      localStorage.setItem('role', loginData.role || '');
+
+      navigate('/', { replace: true });
     } catch (err) {
-      console.error(err);
+      setError(loginErrorMessages[err?.status] || 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản hoặc mật khẩu.');
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -38,7 +69,9 @@ function LoginPage() {
 
       {error && <p className="login-page__error">{error}</p>}
 
-      <Button type="submit" variant="primary">Đăng nhập</Button>
+      <Button type="submit" variant="primary" disabled={isLoading}>
+        {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+      </Button>
     </form>
   );
 }
