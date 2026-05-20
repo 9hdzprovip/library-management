@@ -22,5 +22,20 @@
 .category-form { display: flex; flex-direction: column; gap: 10px; min-width: 320px; }
 .category-form__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
 
-.table-wrap { margin-top: 16px; }
+.category-page__error {
+  color: var(--danger, #ef4444);
+  margin: 16px 0 0;
+}
 
+.category-page__error--modal {
+  margin: 0 0 12px;
+}
+
+.category-page__loading {
+  color: var(--color-muted);
+  margin: 0;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.table-wrap { margin-top: 16px; }

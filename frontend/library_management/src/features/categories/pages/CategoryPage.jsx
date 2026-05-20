@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import CategoryTable from '../components/CategoryTable';
 import CategoryForm from '../components/CategoryForm';
 import Modal from '../../../components/common/Modal/Modal';
@@ -7,59 +7,87 @@ import Input from '../../../components/common/Input/Input';
 import * as categoryApi from '../../../api/categoryApi';
 import '../styles/category.css';
 
+function getErrorMessage(error, fallback) {
+  return error?.message || fallback;
+}
+
 function CategoryPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [editingCategory, setEditingCategory] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    categoryApi.fetchCategories().then((data) => {
-      setCategories(data);
+  const loadCategories = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await categoryApi.getAll();
+      setCategories(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể tải danh sách danh mục.'));
+    } finally {
       setLoading(false);
-    });
+    }
   }, []);
 
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = searchTerm.trim().toLowerCase();
     if (!q) return categories;
-    return categories.filter((c) => c.name.toLowerCase().includes(q));
-  }, [categories, search]);
+    return categories.filter((category) => category.name?.toLowerCase().includes(q));
+  }, [categories, searchTerm]);
 
   function openAdd() {
-    setEditing(null);
+    setError('');
+    setEditingCategory(null);
     setIsModalOpen(true);
   }
 
   function openEdit(item) {
-    setEditing(item);
+    setError('');
+    setEditingCategory(item);
     setIsModalOpen(true);
   }
 
   function closeModal() {
     setIsModalOpen(false);
-    setEditing(null);
+    setEditingCategory(null);
   }
 
   async function handleSave(data) {
-    if (editing) {
-      const updated = await categoryApi.updateCategory(editing.id, data);
-      setCategories((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    } else {
-      const created = await categoryApi.createCategory(data);
-      setCategories((prev) => [created, ...prev]);
+    try {
+      setError('');
+
+      if (editingCategory) {
+        await categoryApi.update(editingCategory.id, data);
+      } else {
+        await categoryApi.create(data);
+      }
+
+      closeModal();
+      await loadCategories();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể lưu thông tin danh mục.'));
     }
-    closeModal();
   }
 
   async function handleDelete(item) {
-    setCategories((prev) => prev.filter((c) => c.id !== item.id));
+    const confirmed = window.confirm(`Bạn có chắc muốn xóa danh mục "${item.name}"?`);
+    if (!confirmed) {
+      return;
+    }
+
     try {
-      await categoryApi.deleteCategory(item.id);
-    } catch (e) {
-      setCategories((prev) => [item, ...prev]);
+      setError('');
+      await categoryApi.delete(item.id);
+      await loadCategories();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể xóa danh mục.'));
     }
   }
 
@@ -72,15 +100,18 @@ function CategoryPage() {
         </div>
 
         <div className="page-actions">
-          <Input placeholder="Tìm theo tên danh mục..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input placeholder="Tìm theo tên danh mục..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           <Button onClick={openAdd} variant="primary">Thêm danh mục</Button>
         </div>
       </div>
 
+      {error && !isModalOpen && <p className="category-page__error">{error}</p>}
+
       <CategoryTable categories={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} />
 
-      <Modal title={editing ? 'Sửa danh mục' : 'Thêm danh mục'} isOpen={isModalOpen} onClose={closeModal}>
-        <CategoryForm initialData={editing} onSave={handleSave} onCancel={closeModal} />
+      <Modal title={editingCategory ? 'Sửa danh mục' : 'Thêm danh mục'} isOpen={isModalOpen} onClose={closeModal}>
+        {error && <p className="category-page__error category-page__error--modal">{error}</p>}
+        <CategoryForm initialData={editingCategory} onSave={handleSave} onCancel={closeModal} />
       </Modal>
     </section>
   );

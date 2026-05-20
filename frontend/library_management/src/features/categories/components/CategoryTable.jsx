@@ -18,6 +18,14 @@ function CategoryTable({ categories = [], loading = false, onEdit, onDelete }) {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="table-wrap">
+        <p className="category-page__loading">Đang tải dữ liệu...</p>
+      </div>
+    );
+  }
+
   return <Table columns={columns} data={categories} renderActions={renderActions} />;
 }
 
