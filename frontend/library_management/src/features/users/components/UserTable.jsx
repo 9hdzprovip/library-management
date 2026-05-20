@@ -20,6 +20,14 @@ function UserTable({ users = [], loading = false, onEdit, onDelete }) {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="table-wrap">
+        <p className="user-page__loading">Đang tải dữ liệu...</p>
+      </div>
+    );
+  }
+
   return <Table columns={columns} data={users} renderActions={renderActions} />;
 }
 

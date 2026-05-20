@@ -36,6 +36,7 @@ function UserForm({ initialData = null, onSave, onCancel }) {
   function handleSubmit(e) {
     e.preventDefault();
     if (!username.trim()) return setError('Username không được để trống');
+    if (!initialData && !password) return setError('Password không được để trống');
     if (!fullName.trim()) return setError('Họ tên không được để trống');
     if (email && !isEmail(email)) return setError('Email không hợp lệ');
     if (!role) return setError('Role là bắt buộc');

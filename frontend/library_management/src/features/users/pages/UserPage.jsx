@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import UserTable from '../components/UserTable';
 import UserForm from '../components/UserForm';
 import Modal from '../../../components/common/Modal/Modal';
@@ -7,59 +7,95 @@ import Input from '../../../components/common/Input/Input';
 import * as userApi from '../../../api/userApi';
 import '../styles/user.css';
 
+function getErrorMessage(error, fallback) {
+  return error?.message || fallback;
+}
+
+function sortById(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return [...data].sort((a, b) => Number(a.id) - Number(b.id));
+}
+
 function UserPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [query, setQuery] = useState('');
+  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
 
-  useEffect(() => {
-    setLoading(true);
-    userApi.fetchUsers().then((data) => {
-      setUsers(data);
+  const loadUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await userApi.getAll();
+      setUsers(sortById(data));
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể tải danh sách người dùng.'));
+    } finally {
       setLoading(false);
-    });
+    }
   }, []);
 
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
   const filtered = useMemo(() => {
-    const q = (query || '').trim().toLowerCase();
+    const q = searchTerm.trim().toLowerCase();
     if (!q) return users;
     return users.filter((u) => (u.username || '').toLowerCase().includes(q) || (u.fullName || '').toLowerCase().includes(q));
-  }, [users, query]);
+  }, [users, searchTerm]);
 
   function openAdd() {
-    setEditing(null);
+    setError('');
+    setEditingUser(null);
     setIsModalOpen(true);
   }
 
   function openEdit(user) {
-    setEditing(user);
+    setError('');
+    setEditingUser(user);
     setIsModalOpen(true);
   }
 
   function closeModal() {
     setIsModalOpen(false);
-    setEditing(null);
+    setEditingUser(null);
   }
 
   async function handleSave(payload) {
-    if (editing) {
-      const updated = await userApi.updateUser(editing.id, payload);
-      setUsers((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    } else {
-      const created = await userApi.createUser(payload);
-      setUsers((prev) => [created, ...prev]);
+    try {
+      setError('');
+
+      if (editingUser) {
+        await userApi.update(editingUser.id, payload);
+      } else {
+        await userApi.create(payload);
+      }
+
+      closeModal();
+      await loadUsers();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể lưu thông tin người dùng.'));
     }
-    closeModal();
   }
 
   async function handleDelete(user) {
-    setUsers((prev) => prev.filter((u) => u.id !== user.id));
+    const confirmed = window.confirm(`Bạn có chắc muốn xóa người dùng "${user.username}"?`);
+    if (!confirmed) {
+      return;
+    }
+
     try {
-      await userApi.deleteUser(user.id);
-    } catch (e) {
-      setUsers((prev) => [user, ...prev]);
+      setError('');
+      await userApi.delete(user.id);
+      await loadUsers();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể xóa người dùng.'));
     }
   }
 
@@ -72,15 +108,18 @@ function UserPage() {
         </div>
 
         <div className="page-actions">
-          <Input placeholder="Tìm theo username hoặc họ tên..." value={query} onChange={(e) => setQuery(e.target.value)} />
+          <Input placeholder="Tìm theo username hoặc họ tên..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           <Button onClick={openAdd} variant="primary">Thêm người dùng</Button>
         </div>
       </div>
 
+      {error && !isModalOpen && <p className="user-page__error">{error}</p>}
+
       <UserTable users={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} />
 
-      <Modal title={editing ? 'Sửa người dùng' : 'Thêm người dùng'} isOpen={isModalOpen} onClose={closeModal}>
-        <UserForm initialData={editing} onSave={handleSave} onCancel={closeModal} />
+      <Modal title={editingUser ? 'Sửa người dùng' : 'Thêm người dùng'} isOpen={isModalOpen} onClose={closeModal}>
+        {error && <p className="user-page__error user-page__error--modal">{error}</p>}
+        <UserForm initialData={editingUser} onSave={handleSave} onCancel={closeModal} />
       </Modal>
     </section>
   );
