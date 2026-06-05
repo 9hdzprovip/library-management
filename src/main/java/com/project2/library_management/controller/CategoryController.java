@@ -3,6 +3,7 @@ package com.project2.library_management.controller;
 import com.project2.library_management.dto.request.CategoryRequest;
 import com.project2.library_management.dto.response.CategoryResponse;
 import com.project2.library_management.dto.response.MessageResponse;
+import com.project2.library_management.dto.response.UpdateResponse;
 import com.project2.library_management.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -35,7 +36,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequest request) {
+    public ResponseEntity<UpdateResponse<CategoryResponse>> updateCategory(@PathVariable Long id, @Valid @RequestBody CategoryRequest request) {
         return ResponseEntity.ok(categoryService.updateCategory(id, request));
     }
 

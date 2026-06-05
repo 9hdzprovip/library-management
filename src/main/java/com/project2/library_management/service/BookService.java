@@ -2,6 +2,7 @@ package com.project2.library_management.service;
 
 import com.project2.library_management.dto.request.BookRequest;
 import com.project2.library_management.dto.response.BookResponse;
+import com.project2.library_management.dto.response.UpdateResponse;
 import com.project2.library_management.entity.Author;
 import com.project2.library_management.entity.Book;
 import com.project2.library_management.entity.Category;
@@ -72,7 +73,7 @@ public class BookService {
         return convertToResponse(savedBook);
     }
 
-    public BookResponse updateBook(Long id, BookRequest request) {
+    public UpdateResponse<BookResponse> updateBook(Long id, BookRequest request) {
         Book oldBook = bookRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + id));
         boolean isChanged = false;
@@ -136,7 +137,8 @@ public class BookService {
         }
 
         Book savedBook = isChanged ? bookRepository.save(oldBook) : oldBook;
-        return convertToResponse(savedBook);
+        String message = isChanged ? "Cập nhật sách thành công" : "Không có gì thay đổi";
+        return new UpdateResponse<>(message, isChanged, convertToResponse(savedBook));
     }
 
     public void deleteBook(Long id) {

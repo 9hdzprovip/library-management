@@ -23,6 +23,7 @@ function CategoryPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -52,12 +53,14 @@ function CategoryPage() {
 
   function openAdd() {
     setError('');
+    setSuccessMessage('');
     setEditingCategory(null);
     setIsModalOpen(true);
   }
 
   function openEdit(item) {
     setError('');
+    setSuccessMessage('');
     setEditingCategory(item);
     setIsModalOpen(true);
   }
@@ -72,13 +75,19 @@ function CategoryPage() {
       setError('');
 
       if (editingCategory) {
-        await categoryApi.update(editingCategory.id, data);
+        const response = await categoryApi.update(editingCategory.id, data);
+        setSuccessMessage(response?.message || 'Cập nhật danh mục thành công');
+
+        if (response?.updated) {
+          closeModal();
+          await loadCategories();
+        }
       } else {
         await categoryApi.create(data);
+        setSuccessMessage('Thêm danh mục thành công');
+        closeModal();
+        await loadCategories();
       }
-
-      closeModal();
-      await loadCategories();
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể lưu thông tin danh mục.'));
     }
@@ -113,11 +122,13 @@ function CategoryPage() {
         </div>
       </div>
 
+      {successMessage && !isModalOpen && <p className="category-page__success">{successMessage}</p>}
       {error && !isModalOpen && <p className="category-page__error">{error}</p>}
 
       <CategoryTable categories={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} />
 
       <Modal title={editingCategory ? 'Sửa danh mục' : 'Thêm danh mục'} isOpen={isModalOpen} onClose={closeModal}>
+        {successMessage && <p className="category-page__success category-page__success--modal">{successMessage}</p>}
         {error && <p className="category-page__error category-page__error--modal">{error}</p>}
         <CategoryForm initialData={editingCategory} onSave={handleSave} onCancel={closeModal} />
       </Modal>

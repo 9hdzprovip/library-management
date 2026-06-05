@@ -1,7 +1,9 @@
 package com.project2.library_management.service;
 
-import com.project2.library_management.dto.BorrowBookRequest;
+import com.project2.library_management.dto.request.BorrowRecordUpdateRequest;
+import com.project2.library_management.dto.request.BorrowBookRequest;
 import com.project2.library_management.dto.response.BorrowRecordResponse;
+import com.project2.library_management.dto.response.UpdateResponse;
 import com.project2.library_management.entity.Book;
 import com.project2.library_management.entity.BorrowRecord;
 import com.project2.library_management.entity.User;
@@ -41,7 +43,6 @@ public class BorrowRecordService {
     }
 
     public BorrowRecordResponse getBorrowRecordById(Long id) {
-        // Do not return null when record is missing.
         BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
         return convertToResponse(borrowRecord);
@@ -148,64 +149,54 @@ public class BorrowRecordService {
                 .collect(Collectors.toList());
     }
 
-    public BorrowRecordResponse updateBorrowRecord(Long id, BorrowRecord newBorrowRecord) {
+    public UpdateResponse<BorrowRecordResponse> updateBorrowRecord(Long id, BorrowRecordUpdateRequest request) {
         BorrowRecord oldBorrowRecord = borrowRecordRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
         boolean isChanged = false;
 
-        // Update only if the new value is provided and different.
-        if (newBorrowRecord.getBorrowDate() != null && !Objects.equals(oldBorrowRecord.getBorrowDate(), newBorrowRecord.getBorrowDate())) {
-            oldBorrowRecord.setBorrowDate(newBorrowRecord.getBorrowDate());
+        if (request.getBorrowDate() != null && !Objects.equals(oldBorrowRecord.getBorrowDate(), request.getBorrowDate())) {
+            oldBorrowRecord.setBorrowDate(request.getBorrowDate());
             isChanged = true;
         }
 
-        if (newBorrowRecord.getDueDate() != null && !Objects.equals(oldBorrowRecord.getDueDate(), newBorrowRecord.getDueDate())) {
-            oldBorrowRecord.setDueDate(newBorrowRecord.getDueDate());
+        if (request.getDueDate() != null && !Objects.equals(oldBorrowRecord.getDueDate(), request.getDueDate())) {
+            oldBorrowRecord.setDueDate(request.getDueDate());
             isChanged = true;
         }
 
-        if (newBorrowRecord.getReturnDate() != null && !Objects.equals(oldBorrowRecord.getReturnDate(), newBorrowRecord.getReturnDate())) {
-            oldBorrowRecord.setReturnDate(newBorrowRecord.getReturnDate());
+        if (request.getReturnDate() != null && !Objects.equals(oldBorrowRecord.getReturnDate(), request.getReturnDate())) {
+            oldBorrowRecord.setReturnDate(request.getReturnDate());
             isChanged = true;
         }
 
-        if (newBorrowRecord.getStatus() != null && !Objects.equals(oldBorrowRecord.getStatus(), newBorrowRecord.getStatus())) {
-            oldBorrowRecord.setStatus(newBorrowRecord.getStatus());
+        if (request.getStatus() != null && !Objects.equals(oldBorrowRecord.getStatus(), request.getStatus())) {
+            oldBorrowRecord.setStatus(request.getStatus());
             isChanged = true;
         }
 
-        if (newBorrowRecord.getUser() != null) {
-            if (newBorrowRecord.getUser().getId() == null) {
-                throw new IllegalArgumentException("User id must not be null");
-            }
-
+        if (request.getUserId() != null) {
             Long oldUserId = oldBorrowRecord.getUser() != null ? oldBorrowRecord.getUser().getId() : null;
-            Long newUserId = newBorrowRecord.getUser().getId();
-            if (!Objects.equals(oldUserId, newUserId)) {
-                User user = userRepository.findById(newUserId)
-                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + newUserId));
+            if (!Objects.equals(oldUserId, request.getUserId())) {
+                User user = userRepository.findById(request.getUserId())
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + request.getUserId()));
                 oldBorrowRecord.setUser(user);
                 isChanged = true;
             }
         }
 
-        if (newBorrowRecord.getBook() != null) {
-            if (newBorrowRecord.getBook().getId() == null) {
-                throw new IllegalArgumentException("Book id must not be null");
-            }
-
+        if (request.getBookId() != null) {
             Long oldBookId = oldBorrowRecord.getBook() != null ? oldBorrowRecord.getBook().getId() : null;
-            Long newBookId = newBorrowRecord.getBook().getId();
-            if (!Objects.equals(oldBookId, newBookId)) {
-                Book book = bookRepository.findById(newBookId)
-                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + newBookId));
+            if (!Objects.equals(oldBookId, request.getBookId())) {
+                Book book = bookRepository.findById(request.getBookId())
+                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + request.getBookId()));
                 oldBorrowRecord.setBook(book);
                 isChanged = true;
             }
         }
 
         BorrowRecord savedRecord = isChanged ? borrowRecordRepository.save(oldBorrowRecord) : oldBorrowRecord;
-        return convertToResponse(savedRecord);
+        String message = isChanged ? "Cập nhật phiếu mượn thành công" : "Không có gì thay đổi";
+        return new UpdateResponse<>(message, isChanged, convertToResponse(savedRecord));
     }
 
     public void deleteBorrowRecord(Long id) {
@@ -224,15 +215,15 @@ public class BorrowRecordService {
                 .collect(Collectors.toList());
     }
 
-        public List<BorrowRecordResponse> getMyBorrowRecords(String username) {
+    public List<BorrowRecordResponse> getMyBorrowRecords(String username) {
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng"));
 
         return borrowRecordRepository.findByUserId(user.getId())
-            .stream()
-            .map(this::convertToResponse)
-            .collect(Collectors.toList());
-        }
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
+    }
 
     public List<BorrowRecordResponse> getBorrowRecordsByStatus(String statusStr) {
         BorrowStatus status;

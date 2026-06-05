@@ -36,7 +36,7 @@ function formatDisplayDate(value) {
 
   try {
     return formatDate(value);
-  } catch (error) {
+  } catch {
     return toDateInputValue(value);
   }
 }
@@ -47,6 +47,7 @@ function BorrowRecordPage() {
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBorrowRecord, setEditingBorrowRecord] = useState(null);
@@ -85,7 +86,6 @@ function BorrowRecordPage() {
       } finally {
         setLoading(false);
       }
-
     }
 
     loadInitialData();
@@ -120,12 +120,14 @@ function BorrowRecordPage() {
 
   function openAdd() {
     setError('');
+    setSuccessMessage('');
     setEditingBorrowRecord(null);
     setIsModalOpen(true);
   }
 
   function openEdit(rec) {
     setError('');
+    setSuccessMessage('');
     setEditingBorrowRecord(rec);
     setIsModalOpen(true);
   }
@@ -149,7 +151,13 @@ function BorrowRecordPage() {
           status: payload.status,
         };
 
-        await borrowApi.update(editingBorrowRecord.id, updatePayload);
+        const response = await borrowApi.update(editingBorrowRecord.id, updatePayload);
+        setSuccessMessage(response?.message || 'Cập nhật phiếu mượn thành công');
+
+        if (response?.updated) {
+          closeModal();
+          await loadBorrowRecords(selectedStatus);
+        }
       } else {
         const createPayload = {
           userId: Number(payload.userId),
@@ -158,10 +166,10 @@ function BorrowRecordPage() {
         };
 
         await borrowApi.borrowBook(createPayload);
+        setSuccessMessage('Tạo phiếu mượn thành công');
+        closeModal();
+        await loadBorrowRecords(selectedStatus);
       }
-
-      closeModal();
-      await loadBorrowRecords(selectedStatus);
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể lưu phiếu mượn.'));
     }
@@ -216,11 +224,13 @@ function BorrowRecordPage() {
         </div>
       </div>
 
+      {successMessage && !isModalOpen && <p className="borrow-record-page__success">{successMessage}</p>}
       {error && !isModalOpen && <p className="borrow-record-page__error">{error}</p>}
 
       <BorrowTable records={enriched} loading={loading} onEdit={openEdit} onReturn={handleReturn} onDelete={handleDelete} />
 
       <Modal title={editingBorrowRecord ? 'Sửa phiếu mượn' : 'Tạo phiếu mượn'} isOpen={isModalOpen} onClose={closeModal}>
+        {successMessage && <p className="borrow-record-page__success borrow-record-page__success--modal">{successMessage}</p>}
         {error && <p className="borrow-record-page__error borrow-record-page__error--modal">{error}</p>}
         <BorrowForm initialData={editingBorrowRecord} onSave={handleSave} onCancel={closeModal} users={users} books={books} />
       </Modal>

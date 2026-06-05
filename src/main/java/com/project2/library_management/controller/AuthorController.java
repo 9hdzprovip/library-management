@@ -2,8 +2,8 @@ package com.project2.library_management.controller;
 
 import com.project2.library_management.dto.request.AuthorRequest;
 import com.project2.library_management.dto.response.AuthorResponse;
-import com.project2.library_management.dto.response.AuthorUpdateResponse;
 import com.project2.library_management.dto.response.MessageResponse;
+import com.project2.library_management.dto.response.UpdateResponse;
 import com.project2.library_management.service.AuthorService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -38,7 +38,7 @@ public class AuthorController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AuthorUpdateResponse> updateAuthor(@PathVariable Long id, @Valid @RequestBody AuthorRequest request) {
+    public ResponseEntity<UpdateResponse<AuthorResponse>> updateAuthor(@PathVariable Long id, @Valid @RequestBody AuthorRequest request) {
         return ResponseEntity.ok(authorService.updateAuthor(id, request));
     }
 

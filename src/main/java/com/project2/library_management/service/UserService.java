@@ -1,6 +1,7 @@
 package com.project2.library_management.service;
 
 import com.project2.library_management.dto.request.UserRequest;
+import com.project2.library_management.dto.response.UpdateResponse;
 import com.project2.library_management.dto.response.UserResponse;
 import com.project2.library_management.entity.User;
 import com.project2.library_management.repository.UserRepository;
@@ -51,7 +52,7 @@ public class UserService {
         return convertToResponse(savedUser);
     }
 
-    public UserResponse updateUser(Long id, UserRequest request) {
+    public UpdateResponse<UserResponse> updateUser(Long id, UserRequest request) {
         User oldUser = userRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + id));
         boolean isChanged = false;
@@ -63,9 +64,11 @@ public class UserService {
         }
 
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            // Only update password if a new password is provided; encode it before saving
-            oldUser.setPassword(passwordEncoder.encode(request.getPassword()));
-            isChanged = true;
+            // Only update password when the raw password is actually different.
+            if (oldUser.getPassword() == null || !passwordEncoder.matches(request.getPassword(), oldUser.getPassword())) {
+                oldUser.setPassword(passwordEncoder.encode(request.getPassword()));
+                isChanged = true;
+            }
         }
 
         if (request.getFullName() != null && !Objects.equals(oldUser.getFullName(), request.getFullName())) {
@@ -84,7 +87,8 @@ public class UserService {
         }
 
         User savedUser = isChanged ? userRepository.save(oldUser) : oldUser;
-        return convertToResponse(savedUser);
+        String message = isChanged ? "Cập nhật người dùng thành công" : "Không có gì thay đổi";
+        return new UpdateResponse<>(message, isChanged, convertToResponse(savedUser));
     }
 
     public void deleteUser(Long id) {

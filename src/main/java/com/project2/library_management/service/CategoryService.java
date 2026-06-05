@@ -2,6 +2,7 @@ package com.project2.library_management.service;
 
 import com.project2.library_management.dto.request.CategoryRequest;
 import com.project2.library_management.dto.response.CategoryResponse;
+import com.project2.library_management.dto.response.UpdateResponse;
 import com.project2.library_management.entity.Category;
 import com.project2.library_management.repository.CategoryRepository;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class CategoryService {
         return convertToResponse(savedCategory);
     }
 
-    public CategoryResponse updateCategory(Long id, CategoryRequest request) {
+    public UpdateResponse<CategoryResponse> updateCategory(Long id, CategoryRequest request) {
         Category oldCategory = categoryRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy thể loại với id = " + id));
         boolean isChanged = false;
@@ -60,7 +61,8 @@ public class CategoryService {
         }
 
         Category savedCategory = isChanged ? categoryRepository.save(oldCategory) : oldCategory;
-        return convertToResponse(savedCategory);
+        String message = isChanged ? "Cập nhật thể loại thành công" : "Không có gì thay đổi";
+        return new UpdateResponse<>(message, isChanged, convertToResponse(savedCategory));
     }
 
     public void deleteCategory(Long id) {

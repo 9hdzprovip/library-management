@@ -1,18 +1,18 @@
 package com.project2.library_management.dto.response;
 
-public class AuthorUpdateResponse {
+public class UpdateResponse<T> {
 
     private String message;
     private boolean updated;
-    private AuthorResponse author;
+    private T data;
 
-    public AuthorUpdateResponse() {
+    public UpdateResponse() {
     }
 
-    public AuthorUpdateResponse(String message, boolean updated, AuthorResponse author) {
+    public UpdateResponse(String message, boolean updated, T data) {
         this.message = message;
         this.updated = updated;
-        this.author = author;
+        this.data = data;
     }
 
     public String getMessage() {
@@ -31,11 +31,11 @@ public class AuthorUpdateResponse {
         this.updated = updated;
     }
 
-    public AuthorResponse getAuthor() {
-        return author;
+    public T getData() {
+        return data;
     }
 
-    public void setAuthor(AuthorResponse author) {
-        this.author = author;
+    public void setData(T data) {
+        this.data = data;
     }
 }

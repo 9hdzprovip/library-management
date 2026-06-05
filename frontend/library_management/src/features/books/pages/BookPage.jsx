@@ -27,6 +27,7 @@ function BookPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [searchTitle, setSearchTitle] = useState('');
   const [selectedAuthorId, setSelectedAuthorId] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
@@ -110,12 +111,14 @@ function BookPage() {
 
   function openAdd() {
     setError('');
+    setSuccessMessage('');
     setEditingBook(null);
     setIsModalOpen(true);
   }
 
   function openEdit(book) {
     setError('');
+    setSuccessMessage('');
     setEditingBook(book);
     setIsModalOpen(true);
   }
@@ -130,13 +133,19 @@ function BookPage() {
       setError('');
 
       if (editingBook) {
-        await bookApi.update(editingBook.id, payload);
+        const response = await bookApi.update(editingBook.id, payload);
+        setSuccessMessage(response?.message || 'Cập nhật sách thành công');
+
+        if (response?.updated) {
+          closeModal();
+          await loadBooks();
+        }
       } else {
         await bookApi.create(payload);
+        setSuccessMessage('Thêm sách thành công');
+        closeModal();
+        await loadBooks();
       }
-
-      closeModal();
-      await loadBooks();
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể lưu thông tin sách.'));
     }
@@ -177,11 +186,13 @@ function BookPage() {
         categories={categories}
       />
 
+      {successMessage && !isModalOpen && <p className="book-page__success">{successMessage}</p>}
       {error && !isModalOpen && <p className="book-page__error">{error}</p>}
 
       <BookTable books={enriched} loading={loading} onEdit={openEdit} onDelete={handleDelete} />
 
       <Modal title={editingBook ? 'Sửa sách' : 'Thêm sách'} isOpen={isModalOpen} onClose={closeModal}>
+        {successMessage && <p className="book-page__success book-page__success--modal">{successMessage}</p>}
         {error && <p className="book-page__error book-page__error--modal">{error}</p>}
         <BookForm initialData={editingBook} onSave={handleSave} onCancel={closeModal} authors={authors} categories={categories} />
       </Modal>

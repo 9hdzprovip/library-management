@@ -10,7 +10,17 @@
 	font-size: 14px;
 }
 
+.borrow-record-page__success {
+	margin: 12px 0;
+	color: var(--color-success, #16a34a);
+	font-size: 14px;
+}
+
 .borrow-record-page__error--modal {
+	margin: 0 0 12px;
+}
+
+.borrow-record-page__success--modal {
 	margin: 0 0 12px;
 }
 
@@ -23,4 +33,3 @@
 	margin-top: 12px;
 	color: var(--muted,#6b7280);
 }
-

@@ -27,7 +27,16 @@
   margin: 16px 0 0;
 }
 
+.category-page__success {
+  color: var(--color-success, #16a34a);
+  margin: 16px 0 0;
+}
+
 .category-page__error--modal {
+  margin: 0 0 12px;
+}
+
+.category-page__success--modal {
   margin: 0 0 12px;
 }
 

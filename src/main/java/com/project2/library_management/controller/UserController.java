@@ -2,6 +2,7 @@ package com.project2.library_management.controller;
 
 import com.project2.library_management.dto.request.UserRequest;
 import com.project2.library_management.dto.response.MessageResponse;
+import com.project2.library_management.dto.response.UpdateResponse;
 import com.project2.library_management.dto.response.UserResponse;
 import com.project2.library_management.service.UserService;
 import jakarta.validation.Valid;
@@ -37,7 +38,7 @@ public class UserController {
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
+	public ResponseEntity<UpdateResponse<UserResponse>> updateUser(@PathVariable Long id, @Valid @RequestBody UserRequest request) {
 		return ResponseEntity.ok(userService.updateUser(id, request));
 	}
 

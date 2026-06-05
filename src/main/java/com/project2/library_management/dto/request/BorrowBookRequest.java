@@ -1,6 +1,7 @@
-package com.project2.library_management.dto;
+package com.project2.library_management.dto.request;
 
 import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDate;
 
 public class BorrowBookRequest {

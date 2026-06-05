@@ -23,6 +23,7 @@ function UserPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -52,12 +53,14 @@ function UserPage() {
 
   function openAdd() {
     setError('');
+    setSuccessMessage('');
     setEditingUser(null);
     setIsModalOpen(true);
   }
 
   function openEdit(user) {
     setError('');
+    setSuccessMessage('');
     setEditingUser(user);
     setIsModalOpen(true);
   }
@@ -72,13 +75,19 @@ function UserPage() {
       setError('');
 
       if (editingUser) {
-        await userApi.update(editingUser.id, payload);
+        const response = await userApi.update(editingUser.id, payload);
+        setSuccessMessage(response?.message || 'Cập nhật người dùng thành công');
+
+        if (response?.updated) {
+          closeModal();
+          await loadUsers();
+        }
       } else {
         await userApi.create(payload);
+        setSuccessMessage('Thêm người dùng thành công');
+        closeModal();
+        await loadUsers();
       }
-
-      closeModal();
-      await loadUsers();
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể lưu thông tin người dùng.'));
     }
@@ -113,11 +122,13 @@ function UserPage() {
         </div>
       </div>
 
+      {successMessage && !isModalOpen && <p className="user-page__success">{successMessage}</p>}
       {error && !isModalOpen && <p className="user-page__error">{error}</p>}
 
       <UserTable users={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} />
 
       <Modal title={editingUser ? 'Sửa người dùng' : 'Thêm người dùng'} isOpen={isModalOpen} onClose={closeModal}>
+        {successMessage && <p className="user-page__success user-page__success--modal">{successMessage}</p>}
         {error && <p className="user-page__error user-page__error--modal">{error}</p>}
         <UserForm initialData={editingUser} onSave={handleSave} onCancel={closeModal} />
       </Modal>

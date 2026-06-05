@@ -1,9 +1,10 @@
 package com.project2.library_management.controller;
 
-import com.project2.library_management.dto.BorrowBookRequest;
+import com.project2.library_management.dto.request.BorrowRecordUpdateRequest;
+import com.project2.library_management.dto.request.BorrowBookRequest;
 import com.project2.library_management.dto.response.BorrowRecordResponse;
 import com.project2.library_management.dto.response.MessageResponse;
-import com.project2.library_management.entity.BorrowRecord;
+import com.project2.library_management.dto.response.UpdateResponse;
 import com.project2.library_management.service.BorrowRecordService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -65,8 +66,8 @@ public class BorrowRecordController {
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<BorrowRecordResponse> updateBorrowRecord(@PathVariable Long id, @RequestBody BorrowRecord borrowRecord) {
-		return ResponseEntity.ok(borrowRecordService.updateBorrowRecord(id, borrowRecord));
+	public ResponseEntity<UpdateResponse<BorrowRecordResponse>> updateBorrowRecord(@PathVariable Long id, @RequestBody BorrowRecordUpdateRequest request) {
+		return ResponseEntity.ok(borrowRecordService.updateBorrowRecord(id, request));
 	}
 
 	@DeleteMapping("/{id}")
