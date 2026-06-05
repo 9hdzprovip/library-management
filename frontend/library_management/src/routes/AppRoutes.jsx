@@ -10,6 +10,7 @@ import DashboardPage from '../pages/DashboardPage/DashboardPage';
 import LoginPage from '../pages/LoginPage/LoginPage';
 import NotFoundPage from '../pages/NotFoundPage/NotFoundPage';
 import RegisterPage from '../pages/RegisterPage/RegisterPage';
+import UnauthorizedPage from '../pages/UnauthorizedPage/UnauthorizedPage';
 import ProtectedRoute from './ProtectedRoute';
 
 function AppRoutes() {
@@ -24,12 +25,41 @@ function AppRoutes() {
           <Route path="/" element={<AdminLayout />}>
             <Route index element={<DashboardPage />} />
             <Route path="books" element={<BookPage />} />
-            <Route path="authors" element={<AuthorPage />} />
-            <Route path="categories" element={<CategoryPage />} />
-            <Route path="users" element={<UserPage />} />
-            <Route path="borrow-records" element={<BorrowRecordPage />} />
+            <Route
+              path="authors"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <AuthorPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="categories"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <CategoryPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <UserPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="borrow-records"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <BorrowRecordPage />
+                </ProtectedRoute>
+              }
+            />
           </Route>
         </Route>
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

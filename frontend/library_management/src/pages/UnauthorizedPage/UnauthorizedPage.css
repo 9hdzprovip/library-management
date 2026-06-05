@@ -1,0 +1,14 @@
+.unauthorized-page {
+  display: grid;
+  gap: 8px;
+}
+
+.unauthorized-page__link {
+  color: var(--color-primary, #0f766e);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.unauthorized-page__link:hover {
+  text-decoration: underline;
+}

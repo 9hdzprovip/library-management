@@ -1,16 +1,25 @@
 import { NavLink } from 'react-router-dom';
 import './Sidebar.css';
 
-const navItems = [
-  { label: 'Dashboard', to: '/' },
-  { label: 'Quản lý sách', to: '/books' },
-  { label: 'Quản lý tác giả', to: '/authors' },
-  { label: 'Quản lý danh mục', to: '/categories' },
-  { label: 'Quản lý người dùng', to: '/users' },
-  { label: 'Quản lý mượn trả', to: '/borrow-records' },
-];
+const navItemsByRole = {
+  ADMIN: [
+    { label: 'Dashboard', to: '/' },
+    { label: 'Quản lý sách', to: '/books' },
+    { label: 'Quản lý tác giả', to: '/authors' },
+    { label: 'Quản lý danh mục', to: '/categories' },
+    { label: 'Quản lý người dùng', to: '/users' },
+    { label: 'Quản lý mượn trả', to: '/borrow-records' },
+  ],
+  USER: [
+    { label: 'Dashboard', to: '/' },
+    { label: 'Danh sách sách', to: '/books' },
+  ],
+};
 
 function Sidebar() {
+  const role = (localStorage.getItem('role') || 'USER').toUpperCase();
+  const navItems = navItemsByRole[role] || navItemsByRole.USER;
+
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
