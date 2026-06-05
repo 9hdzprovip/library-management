@@ -23,6 +23,7 @@ function AuthorPage() {
   const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAuthor, setEditingAuthor] = useState(null);
@@ -52,12 +53,14 @@ function AuthorPage() {
 
   function openAdd() {
     setError('');
+    setSuccessMessage('');
     setEditingAuthor(null);
     setIsModalOpen(true);
   }
 
   function openEdit(author) {
     setError('');
+    setSuccessMessage('');
     setEditingAuthor(author);
     setIsModalOpen(true);
   }
@@ -72,13 +75,19 @@ function AuthorPage() {
       setError('');
 
       if (editingAuthor) {
-        await authorApi.update(editingAuthor.id, authorData);
+        const response = await authorApi.update(editingAuthor.id, authorData);
+        setSuccessMessage(response?.message || 'Cập nhật tác giả thành công');
+
+        if (response?.updated) {
+          closeModal();
+          await loadAuthors();
+        }
       } else {
         await authorApi.create(authorData);
+        setSuccessMessage('Thêm tác giả thành công');
+        closeModal();
+        await loadAuthors();
       }
-
-      closeModal();
-      await loadAuthors();
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể lưu thông tin tác giả.'));
     }
@@ -117,6 +126,7 @@ function AuthorPage() {
         </div>
       </div>
 
+      {successMessage && !isModalOpen && <p className="author-page__success">{successMessage}</p>}
       {error && !isModalOpen && <p className="author-page__error">{error}</p>}
 
       <AuthorTable
@@ -127,6 +137,7 @@ function AuthorPage() {
       />
 
       <Modal title={editingAuthor ? 'Sửa tác giả' : 'Thêm tác giả'} isOpen={isModalOpen} onClose={closeModal}>
+        {successMessage && <p className="author-page__success author-page__success--modal">{successMessage}</p>}
         {error && <p className="author-page__error author-page__error--modal">{error}</p>}
         <AuthorForm initialData={editingAuthor} onCancel={closeModal} onSave={handleSave} />
       </Modal>

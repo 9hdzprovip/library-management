@@ -2,6 +2,7 @@ package com.project2.library_management.service;
 
 import com.project2.library_management.dto.request.AuthorRequest;
 import com.project2.library_management.dto.response.AuthorResponse;
+import com.project2.library_management.dto.response.AuthorUpdateResponse;
 import com.project2.library_management.entity.Author;
 import com.project2.library_management.repository.AuthorRepository;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class AuthorService {
         return convertToResponse(savedAuthor);
     }
 
-    public AuthorResponse updateAuthor(Long id, AuthorRequest request) {
+    public AuthorUpdateResponse updateAuthor(Long id, AuthorRequest request) {
         Author oldAuthor = authorRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Không tìm thấy tác giả với id = " + id));
         boolean isChanged = false;
@@ -60,7 +61,8 @@ public class AuthorService {
         }
 
         Author savedAuthor = isChanged ? authorRepository.save(oldAuthor) : oldAuthor;
-        return convertToResponse(savedAuthor);
+        String message = isChanged ? "Cập nhật tác giả thành công" : "Không có gì thay đổi";
+        return new AuthorUpdateResponse(message, isChanged, convertToResponse(savedAuthor));
     }
 
     public void deleteAuthor(Long id) {
