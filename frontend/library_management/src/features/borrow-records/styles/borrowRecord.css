@@ -4,8 +4,23 @@
 .page-header p { margin:4px 0 0 0; color:var(--muted,#6b7280); }
 .page-actions { display:flex; gap:8px; align-items:center; }
 
+.borrow-record-page__error {
+	margin: 12px 0;
+	color: #dc2626;
+	font-size: 14px;
+}
+
+.borrow-record-page__error--modal {
+	margin: 0 0 12px;
+}
+
 .borrow-form { display:flex; flex-direction:column; gap:10px; min-width:360px; }
 .borrow-form__actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
 
 .table-wrap { margin-top: 12px; }
+
+.borrow-table__loading {
+	margin-top: 12px;
+	color: var(--muted,#6b7280);
+}
 

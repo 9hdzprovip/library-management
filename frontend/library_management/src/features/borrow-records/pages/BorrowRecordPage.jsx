@@ -1,85 +1,199 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import BorrowTable from '../components/BorrowTable';
 import BorrowForm from '../components/BorrowForm';
 import Modal from '../../../components/common/Modal/Modal';
 import Button from '../../../components/common/Button/Button';
-import Input from '../../../components/common/Input/Input';
 import * as borrowApi from '../../../api/borrowRecordApi';
 import * as userApi from '../../../api/userApi';
 import * as bookApi from '../../../api/bookApi';
+import { formatDate } from '../../../utils/formatDate';
 import '../styles/borrowRecord.css';
 
+function getErrorMessage(error, fallback) {
+  return error?.message || fallback;
+}
+
+function sortById(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return [...data].sort((a, b) => Number(a.id) - Number(b.id));
+}
+
+function toDateInputValue(value) {
+  if (!value) {
+    return '';
+  }
+
+  return String(value).slice(0, 10);
+}
+
+function formatDisplayDate(value) {
+  if (!value) {
+    return '';
+  }
+
+  try {
+    return formatDate(value);
+  } catch (error) {
+    return toDateInputValue(value);
+  }
+}
+
 function BorrowRecordPage() {
-  const [records, setRecords] = useState([]);
+  const [borrowRecords, setBorrowRecords] = useState([]);
   const [users, setUsers] = useState([]);
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filterStatus, setFilterStatus] = useState('');
+  const [error, setError] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const [editingBorrowRecord, setEditingBorrowRecord] = useState(null);
+
+  const loadBorrowRecords = useCallback(async (status = selectedStatus) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const data = status ? await borrowApi.getByStatus(status) : await borrowApi.getAll();
+      setBorrowRecords(sortById(data));
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể tải danh sách phiếu mượn.'));
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedStatus]);
 
   useEffect(() => {
-    setLoading(true);
-    Promise.all([borrowApi.fetchRecords(), userApi.fetchUsers(), bookApi.fetchBooks()]).then(
-      ([r, u, b]) => {
-        setRecords(r);
-        setUsers(u);
-        setBooks(b);
+    async function loadInitialData() {
+      try {
+        setLoading(true);
+        setError('');
+
+        const [recordData, userData, bookData] = await Promise.all([
+          borrowApi.getAll(),
+          userApi.getAll(),
+          bookApi.getAll(),
+        ]);
+
+        setBorrowRecords(sortById(recordData));
+        setUsers(sortById(userData));
+        setBooks(sortById(bookData));
+      } catch (err) {
+        setError(getErrorMessage(err, 'Không thể tải dữ liệu quản lý mượn trả.'));
+      } finally {
         setLoading(false);
       }
-    );
+
+    }
+
+    loadInitialData();
   }, []);
 
   const enriched = useMemo(() => {
-    return records.map((rec) => ({
-      ...rec,
-      userName: users.find((x) => x.id === rec.userId)?.fullName || '',
-      bookTitle: books.find((x) => x.id === rec.bookId)?.title || '',
-    }));
-  }, [records, users, books]);
+    return borrowRecords.map((record) => {
+      const userId = record.userId ?? record.user?.id;
+      const bookId = record.bookId ?? record.book?.id;
 
-  const filtered = useMemo(() => {
-    if (!filterStatus) return enriched;
-    return enriched.filter((r) => r.status === filterStatus);
-  }, [enriched, filterStatus]);
+      const mappedUser = users.find((user) => Number(user.id) === Number(userId));
+      const mappedBook = books.find((book) => Number(book.id) === Number(bookId));
+
+      return {
+        ...record,
+        userId,
+        bookId,
+        userName: record.user?.fullName || record.user?.username || mappedUser?.fullName || mappedUser?.username || '',
+        bookTitle: record.book?.title || mappedBook?.title || '',
+        borrowDateText: formatDisplayDate(record.borrowDate),
+        dueDateText: formatDisplayDate(record.dueDate),
+        returnDateText: formatDisplayDate(record.returnDate),
+      };
+    });
+  }, [borrowRecords, users, books]);
+
+  async function handleStatusChange(event) {
+    const nextStatus = event.target.value;
+    setSelectedStatus(nextStatus);
+    await loadBorrowRecords(nextStatus);
+  }
 
   function openAdd() {
-    setEditing(null);
+    setError('');
+    setEditingBorrowRecord(null);
     setIsModalOpen(true);
   }
 
   function openEdit(rec) {
-    setEditing(rec);
+    setError('');
+    setEditingBorrowRecord(rec);
     setIsModalOpen(true);
   }
 
   function closeModal() {
-    setEditing(null);
+    setEditingBorrowRecord(null);
     setIsModalOpen(false);
   }
 
   async function handleSave(payload) {
-    if (editing) {
-      const updated = await borrowApi.updateRecord(editing.id, payload);
-      setRecords((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-    } else {
-      const created = await borrowApi.createRecord(payload);
-      setRecords((prev) => [created, ...prev]);
+    try {
+      setError('');
+
+      if (editingBorrowRecord) {
+        const updatePayload = {
+          userId: Number(payload.userId),
+          bookId: Number(payload.bookId),
+          borrowDate: payload.borrowDate || null,
+          dueDate: payload.dueDate || null,
+          returnDate: payload.returnDate || null,
+          status: payload.status,
+        };
+
+        await borrowApi.update(editingBorrowRecord.id, updatePayload);
+      } else {
+        const createPayload = {
+          userId: Number(payload.userId),
+          bookId: Number(payload.bookId),
+          dueDate: payload.dueDate,
+        };
+
+        await borrowApi.borrowBook(createPayload);
+      }
+
+      closeModal();
+      await loadBorrowRecords(selectedStatus);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể lưu phiếu mượn.'));
     }
-    closeModal();
   }
 
   async function handleReturn(rec) {
-    const updated = await borrowApi.returnRecord(rec.id, { returnDate: new Date().toISOString().slice(0, 10) });
-    setRecords((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+    const confirmed = window.confirm(`Xác nhận trả sách cho phiếu mượn #${rec.id}?`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setError('');
+      await borrowApi.returnBook(rec.id);
+      await loadBorrowRecords(selectedStatus);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể cập nhật trạng thái trả sách.'));
+    }
   }
 
   async function handleDelete(rec) {
-    setRecords((prev) => prev.filter((r) => r.id !== rec.id));
+    const confirmed = window.confirm(`Bạn có chắc muốn xóa phiếu mượn #${rec.id}?`);
+    if (!confirmed) {
+      return;
+    }
+
     try {
-      await borrowApi.deleteRecord(rec.id);
-    } catch (e) {
-      setRecords((prev) => [rec, ...prev]);
+      setError('');
+      await borrowApi.delete(rec.id);
+      await loadBorrowRecords(selectedStatus);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể xóa phiếu mượn.'));
     }
   }
 
@@ -92,7 +206,7 @@ function BorrowRecordPage() {
         </div>
 
         <div className="page-actions">
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+          <select value={selectedStatus} onChange={handleStatusChange}>
             <option value="">Tất cả trạng thái</option>
             <option value="BORROWED">BORROWED</option>
             <option value="RETURNED">RETURNED</option>
@@ -102,10 +216,13 @@ function BorrowRecordPage() {
         </div>
       </div>
 
-      <BorrowTable records={filtered} loading={loading} onEdit={openEdit} onReturn={handleReturn} onDelete={handleDelete} />
+      {error && !isModalOpen && <p className="borrow-record-page__error">{error}</p>}
 
-      <Modal title={editing ? 'Sửa phiếu mượn' : 'Tạo phiếu mượn'} isOpen={isModalOpen} onClose={closeModal}>
-        <BorrowForm initialData={editing} onSave={handleSave} onCancel={closeModal} users={users} books={books} />
+      <BorrowTable records={enriched} loading={loading} onEdit={openEdit} onReturn={handleReturn} onDelete={handleDelete} />
+
+      <Modal title={editingBorrowRecord ? 'Sửa phiếu mượn' : 'Tạo phiếu mượn'} isOpen={isModalOpen} onClose={closeModal}>
+        {error && <p className="borrow-record-page__error borrow-record-page__error--modal">{error}</p>}
+        <BorrowForm initialData={editingBorrowRecord} onSave={handleSave} onCancel={closeModal} users={users} books={books} />
       </Modal>
     </section>
   );

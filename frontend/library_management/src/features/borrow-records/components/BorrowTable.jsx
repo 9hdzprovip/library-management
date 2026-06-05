@@ -5,9 +5,9 @@ const columns = [
   { key: 'id', label: 'ID' },
   { key: 'userName', label: 'Người dùng' },
   { key: 'bookTitle', label: 'Sách' },
-  { key: 'borrowDate', label: 'Ngày mượn' },
-  { key: 'dueDate', label: 'Ngày đến hạn' },
-  { key: 'returnDate', label: 'Ngày trả' },
+  { key: 'borrowDateText', label: 'Ngày mượn' },
+  { key: 'dueDateText', label: 'Ngày đến hạn' },
+  { key: 'returnDateText', label: 'Ngày trả' },
   { key: 'status', label: 'Trạng thái' },
 ];
 
@@ -22,6 +22,10 @@ function BorrowTable({ records = [], loading = false, onEdit, onReturn, onDelete
         <Button variant="danger" onClick={() => onDelete && onDelete(row)}>Xóa</Button>
       </div>
     );
+  }
+
+  if (loading) {
+    return <p className="borrow-table__loading">Đang tải danh sách phiếu mượn...</p>;
   }
 
   return <Table columns={columns} data={records} renderActions={renderActions} />;

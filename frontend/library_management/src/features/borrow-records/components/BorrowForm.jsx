@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import Button from '../../../components/common/Button/Button';
 import Input from '../../../components/common/Input/Input';
 
+function toDateInputValue(value) {
+  if (!value) {
+    return '';
+  }
+
+  return String(value).slice(0, 10);
+}
+
 function BorrowForm({ initialData = null, onSave, onCancel, users = [], books = [] }) {
+  const isEditing = Boolean(initialData);
   const [userId, setUserId] = useState('');
   const [bookId, setBookId] = useState('');
   const [borrowDate, setBorrowDate] = useState('');
@@ -13,11 +22,11 @@ function BorrowForm({ initialData = null, onSave, onCancel, users = [], books = 
 
   useEffect(() => {
     if (initialData) {
-      setUserId(initialData.userId ?? '');
-      setBookId(initialData.bookId ?? '');
-      setBorrowDate(initialData.borrowDate ?? '');
-      setDueDate(initialData.dueDate ?? '');
-      setReturnDate(initialData.returnDate ?? '');
+      setUserId(String(initialData.userId ?? initialData.user?.id ?? ''));
+      setBookId(String(initialData.bookId ?? initialData.book?.id ?? ''));
+      setBorrowDate(toDateInputValue(initialData.borrowDate));
+      setDueDate(toDateInputValue(initialData.dueDate));
+      setReturnDate(toDateInputValue(initialData.returnDate));
       setStatus(initialData.status ?? 'BORROWED');
     } else {
       setUserId('');
@@ -32,13 +41,24 @@ function BorrowForm({ initialData = null, onSave, onCancel, users = [], books = 
 
   function handleSubmit(e) {
     e.preventDefault();
+
     if (!userId) return setError('Vui lòng chọn người dùng');
     if (!bookId) return setError('Vui lòng chọn sách');
-    if (!borrowDate) return setError('Ngày mượn là bắt buộc');
-    if (dueDate && borrowDate && new Date(dueDate) <= new Date(borrowDate)) return setError('Ngày trả phải sau ngày mượn');
+    if (!isEditing && !dueDate) return setError('Ngày đến hạn là bắt buộc');
+    if (dueDate && Number.isNaN(new Date(dueDate).getTime())) return setError('Ngày đến hạn không hợp lệ');
+    if (returnDate && Number.isNaN(new Date(returnDate).getTime())) return setError('Ngày trả không hợp lệ');
+    if (dueDate && borrowDate && new Date(dueDate) <= new Date(borrowDate)) return setError('Ngày đến hạn phải sau ngày mượn');
     if (status === 'RETURNED' && !returnDate) return setError('Khi trạng thái là RETURNED, cần nhập ngày trả');
 
-    onSave({ userId: Number(userId), bookId: Number(bookId), borrowDate, dueDate: dueDate || null, returnDate: returnDate || null, status });
+    setError('');
+    onSave({
+      userId: Number(userId),
+      bookId: Number(bookId),
+      borrowDate: borrowDate || null,
+      dueDate: dueDate || null,
+      returnDate: returnDate || null,
+      status,
+    });
   }
 
   return (
