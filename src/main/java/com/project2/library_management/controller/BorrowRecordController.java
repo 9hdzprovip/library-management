@@ -1,10 +1,8 @@
 package com.project2.library_management.controller;
 
-import com.project2.library_management.dto.request.BorrowRecordUpdateRequest;
 import com.project2.library_management.dto.request.BorrowBookRequest;
 import com.project2.library_management.dto.response.BorrowRecordResponse;
 import com.project2.library_management.dto.response.MessageResponse;
-import com.project2.library_management.dto.response.UpdateResponse;
 import com.project2.library_management.service.BorrowRecordService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -63,11 +61,6 @@ public class BorrowRecordController {
 	@PutMapping("/update-overdue")
 	public ResponseEntity<List<BorrowRecordResponse>> updateOverdueBorrowRecords() {
 		return ResponseEntity.ok(borrowRecordService.updateOverdueBorrowRecords());
-	}
-
-	@PutMapping("/{id}")
-	public ResponseEntity<UpdateResponse<BorrowRecordResponse>> updateBorrowRecord(@PathVariable Long id, @RequestBody BorrowRecordUpdateRequest request) {
-		return ResponseEntity.ok(borrowRecordService.updateBorrowRecord(id, request));
 	}
 
 	@DeleteMapping("/{id}")

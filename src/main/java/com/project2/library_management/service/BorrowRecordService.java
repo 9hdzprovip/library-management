@@ -1,9 +1,7 @@
 package com.project2.library_management.service;
 
-import com.project2.library_management.dto.request.BorrowRecordUpdateRequest;
 import com.project2.library_management.dto.request.BorrowBookRequest;
 import com.project2.library_management.dto.response.BorrowRecordResponse;
-import com.project2.library_management.dto.response.UpdateResponse;
 import com.project2.library_management.entity.Book;
 import com.project2.library_management.entity.BorrowRecord;
 import com.project2.library_management.entity.User;
@@ -17,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,7 +41,7 @@ public class BorrowRecordService {
 
     public BorrowRecordResponse getBorrowRecordById(Long id) {
         BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Kh\u00f4ng t\u00ecm th\u1ea5y phi\u1ebfu m\u01b0\u1ee3n v\u1edbi id = " + id));
         return convertToResponse(borrowRecord);
     }
 
@@ -64,17 +61,17 @@ public class BorrowRecordService {
 
         LocalDate today = LocalDate.now();
         if (request.getDueDate().isBefore(today)) {
-            throw new IllegalArgumentException("Ngày hẹn trả không được trước ngày mượn");
+            throw new IllegalArgumentException("Ng\u00e0y h\u1eb9n tr\u1ea3 kh\u00f4ng \u0111\u01b0\u1ee3c tr\u01b0\u1edbc ng\u00e0y m\u01b0\u1ee3n");
         }
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + request.getUserId()));
+                .orElseThrow(() -> new NoSuchElementException("Kh\u00f4ng t\u00ecm th\u1ea5y ng\u01b0\u1eddi d\u00f9ng v\u1edbi id = " + request.getUserId()));
 
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + request.getBookId()));
+                .orElseThrow(() -> new NoSuchElementException("Kh\u00f4ng t\u00ecm th\u1ea5y s\u00e1ch v\u1edbi id = " + request.getBookId()));
 
         if (book.getAvailableQuantity() == null || book.getAvailableQuantity() <= 0) {
-            throw new IllegalArgumentException("Sách hiện không còn bản nào để mượn");
+            throw new IllegalArgumentException("S\u00e1ch hi\u1ec7n kh\u00f4ng c\u00f2n b\u1ea3n n\u00e0o \u0111\u1ec3 m\u01b0\u1ee3n");
         }
 
         book.setAvailableQuantity(book.getAvailableQuantity() - 1);
@@ -95,10 +92,10 @@ public class BorrowRecordService {
     @Transactional
     public BorrowRecordResponse returnBook(Long id) {
         BorrowRecord borrowRecord = borrowRecordRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
+                .orElseThrow(() -> new NoSuchElementException("Kh\u00f4ng t\u00ecm th\u1ea5y phi\u1ebfu m\u01b0\u1ee3n v\u1edbi id = " + id));
 
         if (borrowRecord.getStatus() == BorrowStatus.RETURNED) {
-            throw new IllegalArgumentException("Phiếu mượn này đã được trả trước đó");
+            throw new IllegalArgumentException("Phi\u1ebfu m\u01b0\u1ee3n n\u00e0y \u0111\u00e3 \u0111\u01b0\u1ee3c tr\u1ea3 tr\u01b0\u1edbc \u0111\u00f3");
         }
 
         Book book = borrowRecord.getBook();
@@ -114,7 +111,7 @@ public class BorrowRecordService {
         }
 
         if (bookQuantity != null && currentAvailableQuantity >= bookQuantity) {
-            throw new IllegalArgumentException("Số lượng sách còn lại không được lớn hơn tổng số lượng sách");
+            throw new IllegalArgumentException("S\u1ed1 l\u01b0\u1ee3ng s\u00e1ch c\u00f2n l\u1ea1i kh\u00f4ng \u0111\u01b0\u1ee3c l\u1edbn h\u01a1n t\u1ed5ng s\u1ed1 l\u01b0\u1ee3ng s\u00e1ch");
         }
 
         book.setAvailableQuantity(currentAvailableQuantity + 1);
@@ -149,66 +146,16 @@ public class BorrowRecordService {
                 .collect(Collectors.toList());
     }
 
-    public UpdateResponse<BorrowRecordResponse> updateBorrowRecord(Long id, BorrowRecordUpdateRequest request) {
-        BorrowRecord oldBorrowRecord = borrowRecordRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id));
-        boolean isChanged = false;
-
-        if (request.getBorrowDate() != null && !Objects.equals(oldBorrowRecord.getBorrowDate(), request.getBorrowDate())) {
-            oldBorrowRecord.setBorrowDate(request.getBorrowDate());
-            isChanged = true;
-        }
-
-        if (request.getDueDate() != null && !Objects.equals(oldBorrowRecord.getDueDate(), request.getDueDate())) {
-            oldBorrowRecord.setDueDate(request.getDueDate());
-            isChanged = true;
-        }
-
-        if (request.getReturnDate() != null && !Objects.equals(oldBorrowRecord.getReturnDate(), request.getReturnDate())) {
-            oldBorrowRecord.setReturnDate(request.getReturnDate());
-            isChanged = true;
-        }
-
-        if (request.getStatus() != null && !Objects.equals(oldBorrowRecord.getStatus(), request.getStatus())) {
-            oldBorrowRecord.setStatus(request.getStatus());
-            isChanged = true;
-        }
-
-        if (request.getUserId() != null) {
-            Long oldUserId = oldBorrowRecord.getUser() != null ? oldBorrowRecord.getUser().getId() : null;
-            if (!Objects.equals(oldUserId, request.getUserId())) {
-                User user = userRepository.findById(request.getUserId())
-                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + request.getUserId()));
-                oldBorrowRecord.setUser(user);
-                isChanged = true;
-            }
-        }
-
-        if (request.getBookId() != null) {
-            Long oldBookId = oldBorrowRecord.getBook() != null ? oldBorrowRecord.getBook().getId() : null;
-            if (!Objects.equals(oldBookId, request.getBookId())) {
-                Book book = bookRepository.findById(request.getBookId())
-                        .orElseThrow(() -> new NoSuchElementException("Không tìm thấy sách với id = " + request.getBookId()));
-                oldBorrowRecord.setBook(book);
-                isChanged = true;
-            }
-        }
-
-        BorrowRecord savedRecord = isChanged ? borrowRecordRepository.save(oldBorrowRecord) : oldBorrowRecord;
-        String message = isChanged ? "Cập nhật phiếu mượn thành công" : "Không có gì thay đổi";
-        return new UpdateResponse<>(message, isChanged, convertToResponse(savedRecord));
-    }
-
     public void deleteBorrowRecord(Long id) {
         if (!borrowRecordRepository.existsById(id)) {
-            throw new NoSuchElementException("Không tìm thấy phiếu mượn với id = " + id);
+            throw new NoSuchElementException("Kh\u00f4ng t\u00ecm th\u1ea5y phi\u1ebfu m\u01b0\u1ee3n v\u1edbi id = " + id);
         }
         borrowRecordRepository.deleteById(id);
     }
 
     public List<BorrowRecordResponse> getBorrowRecordsByUserId(Long userId) {
         userRepository.findById(userId)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng với id = " + userId));
+                .orElseThrow(() -> new NoSuchElementException("Kh\u00f4ng t\u00ecm th\u1ea5y ng\u01b0\u1eddi d\u00f9ng v\u1edbi id = " + userId));
         return borrowRecordRepository.findByUserId(userId)
                 .stream()
                 .map(this::convertToResponse)
@@ -217,7 +164,7 @@ public class BorrowRecordService {
 
     public List<BorrowRecordResponse> getMyBorrowRecords(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new NoSuchElementException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new NoSuchElementException("Kh\u00f4ng t\u00ecm th\u1ea5y ng\u01b0\u1eddi d\u00f9ng"));
 
         return borrowRecordRepository.findByUserId(user.getId())
                 .stream()
@@ -230,7 +177,7 @@ public class BorrowRecordService {
         try {
             status = BorrowStatus.valueOf(statusStr.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Trạng thái không hợp lệ: " + statusStr + ". Giá trị hợp lệ: BORROWED, RETURNED, OVERDUE");
+            throw new IllegalArgumentException("Tr\u1ea1ng th\u00e1i kh\u00f4ng h\u1ee3p l\u1ec7: " + statusStr + ". Gi\u00e1 tr\u1ecb h\u1ee3p l\u1ec7: BORROWED, RETURNED, OVERDUE");
         }
         return borrowRecordRepository.findByStatus(status)
                 .stream()
