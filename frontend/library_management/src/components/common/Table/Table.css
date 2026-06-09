@@ -17,6 +17,7 @@
   border-bottom: 1px solid var(--color-border);
   padding: 14px 16px;
   text-align: left;
+  vertical-align: middle;
 }
 
 .table th {
@@ -39,6 +40,32 @@
 .table__actions {
   text-align: right;
   white-space: nowrap;
+}
+
+.table__actions > div {
+  display: inline-flex !important;
+  gap: 8px !important;
+  justify-content: flex-end;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.table-action-btn {
+  width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: var(--radius-md) !important;
+  transition: all var(--transition-fast) !important;
+}
+
+.table-action-btn svg {
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
 .table__empty {

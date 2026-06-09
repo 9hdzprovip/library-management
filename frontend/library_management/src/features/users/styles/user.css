@@ -1,28 +1,64 @@
-.user-page { width: 100%; padding: 20px; }
-.page-header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
-.page-header h1 { margin:0; font-size:20px; }
-.page-header p { margin:4px 0 0 0; color:var(--muted,#6b7280); }
-.page-actions { display:flex; gap:8px; align-items:center; }
-.user-form { display:flex; flex-direction:column; gap:10px; min-width:320px; }
-.user-form__actions { display:flex; justify-content:flex-end; gap:8px; margin-top:8px; }
+.user-page {
+  animation: fadeIn var(--transition-normal);
+  width: 100%;
+}
+
+.user-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 400px;
+}
+
+.search-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  margin: var(--space-4) 0 var(--space-6);
+}
+
+.user-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
 .user-page__error {
-  color: var(--danger, #ef4444);
-  margin: 16px 0 0;
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  margin: var(--space-4) 0;
 }
+
 .user-page__success {
-  color: var(--color-success, #16a34a);
-  margin: 16px 0 0;
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  margin: var(--space-4) 0;
 }
-.user-page__error--modal {
-  margin: 0 0 12px;
-}
+
+.user-page__error--modal,
 .user-page__success--modal {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-4);
 }
-.user-page__loading {
-  color: var(--color-muted);
-  margin: 0;
-  padding: 24px 16px;
-  text-align: center;
+
+.table-wrap {
+  margin-top: var(--space-5);
 }
-.table-wrap { margin-top: 12px; }
+
+@media (max-width: 768px) {
+  .user-form {
+    min-width: 100%;
+  }
+}

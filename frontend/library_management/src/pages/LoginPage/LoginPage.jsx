@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import hustLogo from '../../assets/images/logo-hust-vector-01.jpg';
 import Button from '../../components/common/Button/Button';
 import Input from '../../components/common/Input/Input';
 import './LoginPage.css';
@@ -58,25 +59,43 @@ function LoginPage() {
   }
 
   return (
-    <form className="login-page" onSubmit={handleSubmit}>
-      <div className="login-page__brand">
-        <h1>Library Management System</h1>
-        <p className="login-page__subtitle">Hệ thống quản lý thư viện</p>
-      </div>
+    <div className="login-card">
+      <form className="login-page" onSubmit={handleSubmit}>
+        <div className="login-page__brand">
+          <div className="login-page__logo">
+            <img src={hustLogo} alt="HUST Logo" className="login-page__logo-img" />
+          </div>
+          <h1>Thư viện Bách Khoa</h1>
+          <p className="login-page__subtitle">Hệ thống thư viện Đại học Bách Khoa Hà Nội</p>
+        </div>
 
-      <Input label="Username" name="username" value={username} onChange={(e) => setUsername(e.target.value)} />
-      <Input label="Password" name="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Input
+          label="Tên đăng nhập"
+          name="username"
+          placeholder="Nhập tên đăng nhập của bạn"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
+        <Input
+          label="Mật khẩu"
+          name="password"
+          type="password"
+          placeholder="Nhập mật khẩu của bạn"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      {error && <p className="login-page__error">{error}</p>}
+        {error && <p className="login-page__error">{error}</p>}
 
-      <Button type="submit" variant="primary" disabled={isLoading}>
-        {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
-      </Button>
+        <Button type="submit" variant="primary" disabled={isLoading}>
+          {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        </Button>
 
-      <p className="login-page__switch">
-        Chưa có tài khoản? <Link to="/register">Đăng ký</Link>
-      </p>
-    </form>
+        <p className="login-page__switch">
+          Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+        </p>
+      </form>
+    </div>
   );
 }
 

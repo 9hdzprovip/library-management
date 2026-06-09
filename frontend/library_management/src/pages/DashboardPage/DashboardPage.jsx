@@ -1,4 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
+import {
+  BookOpen,
+  PenTool,
+  Tags,
+  Users,
+  FileText,
+  AlertTriangle,
+  Activity,
+  FileEdit,
+  CheckCircle,
+  Clock
+} from 'lucide-react';
 import * as authorApi from '../../api/authorApi';
 import * as bookApi from '../../api/bookApi';
 import * as borrowRecordApi from '../../api/borrowRecordApi';
@@ -6,11 +18,18 @@ import * as categoryApi from '../../api/categoryApi';
 import * as userApi from '../../api/userApi';
 import './DashboardPage.css';
 
-function StatCard({ label, value, className }) {
+function StatCard({ label, value, className, icon: Icon }) {
   return (
     <div className={`stat-card ${className || ''}`}>
-      <div className="stat-card__value">{value}</div>
-      <div className="stat-card__label">{label}</div>
+      <div className="stat-card__main">
+        <div className="stat-card__value">{value}</div>
+        <div className="stat-card__label">{label}</div>
+      </div>
+      {Icon && (
+        <div className="stat-card__icon-wrapper">
+          <Icon size={24} />
+        </div>
+      )}
     </div>
   );
 }
@@ -18,6 +37,13 @@ function StatCard({ label, value, className }) {
 function getSafeArray(data) {
   return Array.isArray(data) ? data : [];
 }
+
+// Map status to badge style & icon
+const statusConfig = {
+  BORROWED: { class: 'badge-primary', text: 'Đang mượn', icon: Clock },
+  RETURNED: { class: 'badge-success', text: 'Đã trả', icon: CheckCircle },
+  OVERDUE: { class: 'badge-danger', text: 'Quá hạn', icon: AlertTriangle },
+};
 
 function isForbidden(error) {
   return error?.status === 403;
@@ -63,9 +89,6 @@ function getBookTitle(record, books) {
 }
 
 function DashboardPage() {
-  const [notes, setNotes] = useState(
-    'Ghi chú quản trị: theo dõi tình trạng mượn trả, kiểm tra danh mục mới.'
-  );
   const [dashboardData, setDashboardData] = useState({
     books: [],
     authors: [],
@@ -88,65 +111,56 @@ function DashboardPage() {
       setWarning('');
 
       const currentUserIsAdmin = isAdminUser();
-      const results = await Promise.allSettled([
-        bookApi.getAll(),
-        authorApi.getAll(),
-        categoryApi.getAll(),
-        userApi.getAll(),
-        borrowRecordApi.getAll(),
-      ]);
 
-      if (!isMounted) {
-        return;
+      try {
+        if (currentUserIsAdmin) {
+          const [books, authors, categories, users, borrowRecords] = await Promise.all([
+            bookApi.getAll(),
+            authorApi.getAll(),
+            categoryApi.getAll(),
+            userApi.getAll(),
+            borrowRecordApi.getAll(),
+          ]);
+
+          if (!isMounted) return;
+
+          setDashboardData({
+            books: getSafeArray(books),
+            authors: getSafeArray(authors),
+            categories: getSafeArray(categories),
+            users: getSafeArray(users),
+            borrowRecords: getSafeArray(borrowRecords),
+            restrictedUsers: false,
+            restrictedBorrowRecords: false,
+          });
+        } else {
+          // If USER role, only load what they can see
+          const [books, authors, categories] = await Promise.all([
+            bookApi.getAll(),
+            authorApi.getAll(),
+            categoryApi.getAll(),
+          ]);
+
+          if (!isMounted) return;
+
+          setDashboardData({
+            books: getSafeArray(books),
+            authors: getSafeArray(authors),
+            categories: getSafeArray(categories),
+            users: [],
+            borrowRecords: [],
+            restrictedUsers: true,
+            restrictedBorrowRecords: true,
+          });
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        setError(err?.message || 'Không thể tải dữ liệu dashboard.');
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-
-      const [booksResult, authorsResult, categoriesResult, usersResult, borrowRecordsResult] = results;
-      const nextData = {
-        books: booksResult.status === 'fulfilled' ? getSafeArray(booksResult.value) : [],
-        authors: authorsResult.status === 'fulfilled' ? getSafeArray(authorsResult.value) : [],
-        categories: categoriesResult.status === 'fulfilled' ? getSafeArray(categoriesResult.value) : [],
-        users: [],
-        borrowRecords: [],
-        restrictedUsers: false,
-        restrictedBorrowRecords: false,
-      };
-      const errors = [];
-      const warnings = [];
-
-      if (usersResult.status === 'fulfilled') {
-        nextData.users = getSafeArray(usersResult.value);
-      } else if (!currentUserIsAdmin && isForbidden(usersResult.reason)) {
-        nextData.restrictedUsers = true;
-        warnings.push('Bạn không có quyền xem toàn bộ người dùng, dashboard đang ẩn số liệu này.');
-      } else {
-        errors.push(usersResult.reason?.message || 'Không thể tải dữ liệu người dùng.');
-      }
-
-      if (borrowRecordsResult.status === 'fulfilled') {
-        nextData.borrowRecords = getSafeArray(borrowRecordsResult.value);
-      } else if (!currentUserIsAdmin && isForbidden(borrowRecordsResult.reason)) {
-        nextData.restrictedBorrowRecords = true;
-        warnings.push('Bạn không có quyền xem phiếu mượn, dashboard đang hiển thị giá trị thay thế.');
-      } else {
-        errors.push(borrowRecordsResult.reason?.message || 'Không thể tải dữ liệu phiếu mượn.');
-      }
-
-      if (booksResult.status === 'rejected') {
-        errors.push(booksResult.reason?.message || 'Không thể tải dữ liệu sách.');
-      }
-
-      if (authorsResult.status === 'rejected') {
-        errors.push(authorsResult.reason?.message || 'Không thể tải dữ liệu tác giả.');
-      }
-
-      if (categoriesResult.status === 'rejected') {
-        errors.push(categoriesResult.reason?.message || 'Không thể tải dữ liệu danh mục.');
-      }
-
-      setDashboardData(nextData);
-      setError(errors[0] || '');
-      setWarning(warnings.join(' '));
-      setLoading(false);
     }
 
     loadDashboardData();
@@ -183,6 +197,8 @@ function DashboardPage() {
     }));
   }, [dashboardData]);
 
+  const isAdmin = isAdminUser();
+
   return (
     <section className="dashboard-page">
       <header className="dashboard-header">
@@ -194,51 +210,58 @@ function DashboardPage() {
       {!loading && warning && <p className="dashboard-message dashboard-message--warning">{warning}</p>}
 
       <div className="stats-grid">
-        <StatCard label="Tổng số sách" value={loading ? '...' : stats.totalBooks} className="primary" />
-        <StatCard label="Tổng tác giả" value={loading ? '...' : stats.totalAuthors} />
-        <StatCard label="Tổng danh mục" value={loading ? '...' : stats.totalCategories} />
-        <StatCard label="Tổng người dùng" value={loading ? '...' : stats.totalUsers} />
-        <StatCard label="Phiếu đang mượn" value={loading ? '...' : stats.borrowed} />
-        <StatCard label="Phiếu quá hạn" value={loading ? '...' : stats.overdue} className="danger" />
+        <StatCard label="Tổng số sách" value={loading ? '...' : stats.totalBooks} className="stat-card--primary" icon={BookOpen} />
+        <StatCard label="Tổng tác giả" value={loading ? '...' : stats.totalAuthors} className="stat-card--indigo" icon={PenTool} />
+        <StatCard label="Tổng danh mục" value={loading ? '...' : stats.totalCategories} className="stat-card--success" icon={Tags} />
+        {isAdmin && <StatCard label="Tổng người dùng" value={loading ? '...' : stats.totalUsers} className="stat-card--warning" icon={Users} />}
+        {isAdmin && <StatCard label="Phiếu đang mượn" value={loading ? '...' : stats.borrowed} className="stat-card--info" icon={FileText} />}
+        {isAdmin && <StatCard label="Phiếu quá hạn" value={loading ? '...' : stats.overdue} className="stat-card--danger" icon={AlertTriangle} />}
       </div>
 
-      <div className="content-grid">
-        <section className="panel activity-panel">
-          <h2>Hoạt động gần đây</h2>
-          <ul className="activity-list">
-            {loading && <li className="activity-item">Đang tải hoạt động gần đây...</li>}
+      {isAdmin && (
+        <div className="content-grid">
+          <section className="panel activity-panel">
+            <div className="panel-header">
+              <Activity className="panel-icon panel-icon--activity" size={20} />
+              <h2>Hoạt động gần đây</h2>
+            </div>
+            <ul className="activity-list">
+              {loading && <li className="activity-item">Đang tải hoạt động gần đây...</li>}
 
-            {!loading && dashboardData.restrictedBorrowRecords && (
-              <li className="activity-item activity-item--muted">Bạn không có quyền xem hoạt động mượn trả gần đây.</li>
-            )}
+              {!loading && dashboardData.restrictedBorrowRecords && (
+                <li className="activity-item activity-item--muted">Bạn không có quyền xem hoạt động mượn trả gần đây.</li>
+              )}
 
-            {!loading && !dashboardData.restrictedBorrowRecords && activities.length === 0 && (
-              <li className="activity-item activity-item--muted">Chưa có hoạt động mượn trả gần đây.</li>
-            )}
+              {!loading && !dashboardData.restrictedBorrowRecords && activities.length === 0 && (
+                <li className="activity-item activity-item--muted">Chưa có hoạt động mượn trả gần đây.</li>
+              )}
 
-            {!loading &&
-              !dashboardData.restrictedBorrowRecords &&
-              activities.map((activity) => (
-                <li key={activity.id} className="activity-item">
-                  <div className="activity-item__text">
-                    <strong>{activity.bookTitle}</strong> - {activity.userName}
-                  </div>
-                  <div className="activity-item__meta">Trạng thái: {activity.status}</div>
-                </li>
-              ))}
-          </ul>
-        </section>
+              {!loading &&
+                !dashboardData.restrictedBorrowRecords &&
+                activities.map((activity) => {
+                  const config = statusConfig[activity.status] || { class: 'badge-primary', text: activity.status, icon: Clock };
+                  const StatusIcon = config.icon;
 
-        <aside className="panel notes-panel">
-          <h2>Ghi chú quản trị</h2>
-          <textarea
-            className="notes-textarea"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={8}
-          />
-        </aside>
-      </div>
+                  return (
+                    <li key={activity.id} className="activity-item">
+                      <div className="activity-item__content">
+                        <div className="activity-item__details">
+                          <span className="activity-item__user">{activity.userName}</span>
+                          <span className="activity-item__action"> đã mượn cuốn </span>
+                          <strong className="activity-item__book">"{activity.bookTitle}"</strong>
+                        </div>
+                        <span className={`badge ${config.class} activity-item__badge`}>
+                          <StatusIcon size={12} style={{ marginRight: 4, display: 'inline-block', verticalAlign: 'middle' }} />
+                          {config.text}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
+            </ul>
+          </section>
+        </div>
+      )}
     </section>
   );
 }

@@ -1,13 +1,10 @@
 .auth-layout {
   align-items: center;
-  background: var(--color-background);
+  background: radial-gradient(circle at 20% 20%, rgba(79, 70, 229, 0.06) 0%, transparent 40%),
+              radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 45%),
+              var(--color-background);
   display: flex;
   justify-content: center;
   min-height: 100vh;
   padding: 24px;
 }
-
-/* subtle page background and center card wrapper */
-body { background: linear-gradient(180deg, #f7fbff 0%, var(--color-background, #f3f4f6) 100%); }
-
-.auth-layout { background: transparent; }

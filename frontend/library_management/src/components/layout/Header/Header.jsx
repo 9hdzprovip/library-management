@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 import './Header.css';
 
 function Header() {
@@ -17,21 +18,22 @@ function Header() {
   return (
     <header className="header">
       <div className="header__title">
-        <h2>Library Management</h2>
-        <p>Quản trị hệ thống thư viện</p>
+        <h2>Thư Viện Bách Khoa Hà Nội</h2>
+        <p>Hệ thống thư viện Đại học Bách Khoa Hà Nội</p>
       </div>
 
       <div className="header__actions">
         <div className="header__user">
           <span className="header__avatar">{avatarText}</span>
-          <div>
-            <p>{role}</p>
+          <div className="header__user-info">
             <strong>{username}</strong>
+            <span className="header__user-role">{role}</span>
           </div>
         </div>
 
         <button className="header__logout" type="button" onClick={handleLogout}>
-          Đăng xuất
+          <LogOut size={16} />
+          <span>Đăng xuất</span>
         </button>
       </div>
     </header>

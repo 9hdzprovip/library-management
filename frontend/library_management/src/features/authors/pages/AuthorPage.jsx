@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
 import AuthorTable from '../components/AuthorTable';
 import AuthorForm from '../components/AuthorForm';
 import Modal from '../../../components/common/Modal/Modal';
@@ -20,6 +21,9 @@ function sortById(data) {
 }
 
 function AuthorPage() {
+  const role = (localStorage.getItem('role') || 'USER').toUpperCase();
+  const isAdmin = role === 'ADMIN';
+
   const [authors, setAuthors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -112,18 +116,24 @@ function AuthorPage() {
     <section className="author-page">
       <div className="page-header page-header--space">
         <div>
-          <h1>Quản lý tác giả</h1>
-          <p>Danh sách và quản lý thông tin tác giả.</p>
+          <h1>{isAdmin ? 'Quản lý tác giả' : 'Danh sách tác giả'}</h1>
+          <p>{isAdmin ? 'Danh sách và quản lý thông tin tác giả.' : 'Danh sách tác giả trong thư viện.'}</p>
         </div>
 
-        <div className="page-actions">
-          <Input
-            placeholder="Tìm theo tên tác giả..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button onClick={openAdd} variant="primary">Thêm tác giả</Button>
-        </div>
+        {isAdmin && (
+          <div className="page-actions">
+            <Button onClick={openAdd} variant="primary">Thêm tác giả</Button>
+          </div>
+        )}
+      </div>
+
+      <div className="search-card">
+        <Input
+          icon={Search}
+          placeholder="Tìm theo tên tác giả..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       {successMessage && !isModalOpen && <p className="author-page__success">{successMessage}</p>}
@@ -134,6 +144,7 @@ function AuthorPage() {
         loading={loading}
         onEdit={openEdit}
         onDelete={handleDelete}
+        isAdmin={isAdmin}
       />
 
       <Modal title={editingAuthor ? 'Sửa tác giả' : 'Thêm tác giả'} isOpen={isModalOpen} onClose={closeModal}>

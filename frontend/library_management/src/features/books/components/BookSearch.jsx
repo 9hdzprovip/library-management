@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import Input from '../../../components/common/Input/Input';
 
 function BookSearch({ filters = {}, onChange, authors = [], categories = [] }) {
@@ -10,7 +11,12 @@ function BookSearch({ filters = {}, onChange, authors = [], categories = [] }) {
 
   return (
     <div className="book-search">
-      <Input placeholder="Tìm theo tiêu đề..." value={filters.title || ''} onChange={handleChange('title')} />
+      <Input
+        icon={Search}
+        placeholder="Tìm theo tiêu đề sách..."
+        value={filters.title || ''}
+        onChange={handleChange('title')}
+      />
 
       <select value={filters.authorId || ''} onChange={handleChange('authorId')}>
         <option value="">Tất cả tác giả</option>

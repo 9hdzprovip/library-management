@@ -9,7 +9,7 @@ function Table({ columns = [], data = [], renderActions }) {
             {columns.map((column) => (
               <th key={column.key}>{column.label}</th>
             ))}
-            {renderActions && <th className="table__actions-header">Actions</th>}
+            {renderActions && <th className="table__actions-header">Hành động</th>}
           </tr>
         </thead>
         <tbody>
@@ -17,7 +17,9 @@ function Table({ columns = [], data = [], renderActions }) {
             data.map((row, index) => (
               <tr key={row.id ?? index}>
                 {columns.map((column) => (
-                  <td key={column.key}>{row[column.key]}</td>
+                  <td key={column.key}>
+                    {column.render ? column.render(row[column.key], row, index) : row[column.key]}
+                  </td>
                 ))}
                 {renderActions && <td className="table__actions">{renderActions(row)}</td>}
               </tr>

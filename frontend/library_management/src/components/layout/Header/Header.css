@@ -6,28 +6,51 @@
   justify-content: space-between;
   min-height: 72px;
   padding: 16px var(--space-6);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }
 
 .header__title h2 {
-  font-size: 24px;
+  font-size: 20px;
+  font-weight: 700;
   margin: 0;
+  color: var(--color-text);
 }
 
-.header__title p,
-.header__user p {
+.header__title p {
   color: var(--color-muted);
   font-size: 13px;
-  margin: 0;
+  margin: 2px 0 0;
 }
 
 .header__user {
   align-items: center;
   background: var(--color-background-light);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   display: flex;
   gap: var(--space-3);
-  padding: 8px 12px;
+  padding: 6px 12px;
+}
+
+.header__user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.header__user-info strong {
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.header__user-role {
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 1px;
 }
 
 .header__actions {
@@ -38,7 +61,7 @@
 
 .header__avatar {
   align-items: center;
-  background: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #6366f1 100%);
   border-radius: 50%;
   color: #fff;
   display: flex;
@@ -46,30 +69,29 @@
   height: 36px;
   justify-content: center;
   width: 36px;
-}
-
-.header__user strong {
-  color: var(--color-text);
-  display: block;
-  font-size: 14px;
-  line-height: 1.2;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.2);
 }
 
 .header__logout {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  color: var(--color-text);
+  color: var(--color-muted);
   cursor: pointer;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   min-height: 38px;
-  padding: 8px 12px;
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: all var(--transition-fast);
 }
 
 .header__logout:hover {
   border-color: var(--color-danger);
+  background: var(--color-danger-soft);
   color: var(--color-danger);
 }
 
@@ -81,22 +103,23 @@
   }
 
   .header__title h2 {
-    font-size: 20px;
+    font-size: 18px;
   }
 }
 
 @media (max-width: 520px) {
   .header {
     flex-direction: column;
-  }
-
-  .header__actions,
-  .header__user {
-    width: 100%;
+    align-items: stretch;
   }
 
   .header__actions {
-    align-items: stretch;
-    flex-direction: column;
+    margin-top: var(--space-3);
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .header__user {
+    flex: 1;
   }
 }

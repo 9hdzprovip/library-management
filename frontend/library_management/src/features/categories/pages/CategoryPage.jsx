@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
 import CategoryTable from '../components/CategoryTable';
 import CategoryForm from '../components/CategoryForm';
 import Modal from '../../../components/common/Modal/Modal';
@@ -20,6 +21,9 @@ function sortById(data) {
 }
 
 function CategoryPage() {
+  const role = (localStorage.getItem('role') || 'USER').toUpperCase();
+  const isAdmin = role === 'ADMIN';
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -112,20 +116,30 @@ function CategoryPage() {
     <section className="category-page">
       <div className="page-header page-header--space">
         <div>
-          <h1>Quản lý danh mục</h1>
-          <p>Danh sách và quản lý danh mục sách.</p>
+          <h1>{isAdmin ? 'Quản lý danh mục' : 'Danh sách danh mục'}</h1>
+          <p>{isAdmin ? 'Danh sách và quản lý danh mục sách.' : 'Danh sách danh mục sách.'}</p>
         </div>
 
-        <div className="page-actions">
-          <Input placeholder="Tìm theo tên danh mục..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-          <Button onClick={openAdd} variant="primary">Thêm danh mục</Button>
-        </div>
+        {isAdmin && (
+          <div className="page-actions">
+            <Button onClick={openAdd} variant="primary">Thêm danh mục</Button>
+          </div>
+        )}
+      </div>
+
+      <div className="search-card">
+        <Input
+          icon={Search}
+          placeholder="Tìm theo tên danh mục..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       {successMessage && !isModalOpen && <p className="category-page__success">{successMessage}</p>}
       {error && !isModalOpen && <p className="category-page__error">{error}</p>}
 
-      <CategoryTable categories={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} />
+      <CategoryTable categories={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} isAdmin={isAdmin} />
 
       <Modal title={editingCategory ? 'Sửa danh mục' : 'Thêm danh mục'} isOpen={isModalOpen} onClose={closeModal}>
         {successMessage && <p className="category-page__success category-page__success--modal">{successMessage}</p>}

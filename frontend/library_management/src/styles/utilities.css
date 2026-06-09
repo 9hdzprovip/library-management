@@ -54,6 +54,12 @@
   margin-bottom: var(--space-5);
 }
 
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
 .stack {
   display: grid;
   gap: var(--space-4);

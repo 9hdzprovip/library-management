@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
 import UserTable from '../components/UserTable';
 import UserForm from '../components/UserForm';
 import Modal from '../../../components/common/Modal/Modal';
@@ -117,9 +118,17 @@ function UserPage() {
         </div>
 
         <div className="page-actions">
-          <Input placeholder="Tìm theo username hoặc họ tên..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           <Button onClick={openAdd} variant="primary">Thêm người dùng</Button>
         </div>
+      </div>
+
+      <div className="search-card">
+        <Input
+          icon={Search}
+          placeholder="Tìm theo username hoặc họ tên..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       {successMessage && !isModalOpen && <p className="user-page__success">{successMessage}</p>}

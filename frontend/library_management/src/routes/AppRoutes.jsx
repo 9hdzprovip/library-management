@@ -28,7 +28,7 @@ function AppRoutes() {
             <Route
               path="authors"
               element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ProtectedRoute allowedRoles={['ADMIN', 'USER']}>
                   <AuthorPage />
                 </ProtectedRoute>
               }
@@ -36,7 +36,7 @@ function AppRoutes() {
             <Route
               path="categories"
               element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ProtectedRoute allowedRoles={['ADMIN', 'USER']}>
                   <CategoryPage />
                 </ProtectedRoute>
               }
@@ -52,7 +52,7 @@ function AppRoutes() {
             <Route
               path="borrow-records"
               element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ProtectedRoute allowedRoles={['ADMIN', 'USER']}>
                   <BorrowRecordPage />
                 </ProtectedRoute>
               }

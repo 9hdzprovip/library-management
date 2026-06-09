@@ -42,6 +42,9 @@ function formatDisplayDate(value) {
 }
 
 function BorrowRecordPage() {
+  const role = (localStorage.getItem('role') || 'USER').toUpperCase();
+  const isAdmin = role === 'ADMIN';
+
   const [borrowRecords, setBorrowRecords] = useState([]);
   const [users, setUsers] = useState([]);
   const [books, setBooks] = useState([]);
@@ -57,14 +60,22 @@ function BorrowRecordPage() {
       setLoading(true);
       setError('');
 
-      const data = status ? await borrowApi.getByStatus(status) : await borrowApi.getAll();
+      let data;
+      if (isAdmin) {
+        data = status ? await borrowApi.getByStatus(status) : await borrowApi.getAll();
+      } else {
+        data = await borrowApi.getMyRecords();
+        if (status) {
+          data = data.filter(r => r.status === status);
+        }
+      }
       setBorrowRecords(sortById(data));
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể tải danh sách phiếu mượn.'));
     } finally {
       setLoading(false);
     }
-  }, [selectedStatus]);
+  }, [selectedStatus, isAdmin]);
 
   useEffect(() => {
     async function loadInitialData() {
@@ -72,15 +83,26 @@ function BorrowRecordPage() {
         setLoading(true);
         setError('');
 
-        const [recordData, userData, bookData] = await Promise.all([
-          borrowApi.getAll(),
-          userApi.getAll(),
-          bookApi.getAll(),
-        ]);
+        if (isAdmin) {
+          const [recordData, userData, bookData] = await Promise.all([
+            borrowApi.getAll(),
+            userApi.getAll(),
+            bookApi.getAll(),
+          ]);
 
-        setBorrowRecords(sortById(recordData));
-        setUsers(sortById(userData));
-        setBooks(sortById(bookData));
+          setBorrowRecords(sortById(recordData));
+          setUsers(sortById(userData));
+          setBooks(sortById(bookData));
+        } else {
+          const [recordData, bookData] = await Promise.all([
+            borrowApi.getMyRecords(),
+            bookApi.getAll(),
+          ]);
+
+          setBorrowRecords(sortById(recordData));
+          setUsers([]);
+          setBooks(sortById(bookData));
+        }
       } catch (err) {
         setError(getErrorMessage(err, 'Không thể tải dữ liệu quản lý mượn trả.'));
       } finally {
@@ -89,7 +111,7 @@ function BorrowRecordPage() {
     }
 
     loadInitialData();
-  }, []);
+  }, [isAdmin]);
 
   const enriched = useMemo(() => {
     return borrowRecords.map((record) => {
@@ -103,8 +125,8 @@ function BorrowRecordPage() {
         ...record,
         userId,
         bookId,
-        userName: record.user?.fullName || record.user?.username || mappedUser?.fullName || mappedUser?.username || '',
-        bookTitle: record.book?.title || mappedBook?.title || '',
+        userName: record.fullName || record.user?.fullName || record.user?.username || mappedUser?.fullName || mappedUser?.username || '',
+        bookTitle: record.bookTitle || record.book?.title || mappedBook?.title || '',
         borrowDateText: formatDisplayDate(record.borrowDate),
         dueDateText: formatDisplayDate(record.dueDate),
         returnDateText: formatDisplayDate(record.returnDate),
@@ -209,25 +231,31 @@ function BorrowRecordPage() {
     <section className="borrow-record-page">
       <div className="page-header page-header--space">
         <div>
-          <h1>Quản lý mượn trả</h1>
-          <p>Danh sách phiếu mượn và trạng thái trả sách.</p>
+          <h1>{isAdmin ? 'Quản lý mượn trả' : 'Lịch sử mượn sách'}</h1>
+          <p>{isAdmin ? 'Danh sách phiếu mượn và trạng thái trả sách.' : 'Danh sách phiếu mượn của bạn.'}</p>
         </div>
 
-        <div className="page-actions">
-          <select value={selectedStatus} onChange={handleStatusChange}>
-            <option value="">Tất cả trạng thái</option>
-            <option value="BORROWED">BORROWED</option>
-            <option value="RETURNED">RETURNED</option>
-            <option value="OVERDUE">OVERDUE</option>
-          </select>
-          <Button onClick={openAdd} variant="primary">Tạo phiếu mượn</Button>
-        </div>
+        {isAdmin && (
+          <div className="page-actions">
+            <Button onClick={openAdd} variant="primary">Tạo phiếu mượn</Button>
+          </div>
+        )}
+      </div>
+
+      <div className="search-card borrow-search">
+        <label className="borrow-search__label">Lọc theo trạng thái:</label>
+        <select value={selectedStatus} onChange={handleStatusChange}>
+          <option value="">Tất cả trạng thái</option>
+          <option value="BORROWED">BORROWED (Đang mượn)</option>
+          <option value="RETURNED">RETURNED (Đã trả)</option>
+          <option value="OVERDUE">OVERDUE (Quá hạn)</option>
+        </select>
       </div>
 
       {successMessage && !isModalOpen && <p className="borrow-record-page__success">{successMessage}</p>}
       {error && !isModalOpen && <p className="borrow-record-page__error">{error}</p>}
 
-      <BorrowTable records={enriched} loading={loading} onEdit={openEdit} onReturn={handleReturn} onDelete={handleDelete} />
+      <BorrowTable records={enriched} loading={loading} onEdit={openEdit} onReturn={handleReturn} onDelete={handleDelete} isAdmin={isAdmin} />
 
       <Modal title={editingBorrowRecord ? 'Sửa phiếu mượn' : 'Tạo phiếu mượn'} isOpen={isModalOpen} onClose={closeModal}>
         {successMessage && <p className="borrow-record-page__success borrow-record-page__success--modal">{successMessage}</p>}
