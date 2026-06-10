@@ -1,4 +1,4 @@
-import { Edit2, Trash2, CheckSquare } from 'lucide-react';
+import { Edit2, Trash2, CheckSquare, Bell } from 'lucide-react';
 import Table from '../../../components/common/Table/Table';
 import Button from '../../../components/common/Button/Button';
 
@@ -32,10 +32,15 @@ const columns = [
   },
 ];
 
-function BorrowTable({ records = [], loading = false, onEdit, onReturn, onDelete, isAdmin }) {
+function BorrowTable({ records = [], loading = false, onEdit, onReturn, onDelete, onNotify, isAdmin }) {
   function renderActions(row) {
     return (
       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+        {row.status === 'OVERDUE' && (
+          <Button variant="warning" onClick={() => onNotify && onNotify(row)} title="Gửi thông báo nhắc nhở" className="table-action-btn">
+            <Bell size={14} />
+          </Button>
+        )}
         <Button variant="secondary" onClick={() => onEdit && onEdit(row)} title="Sửa thông tin phiếu" className="table-action-btn">
           <Edit2 size={14} />
         </Button>

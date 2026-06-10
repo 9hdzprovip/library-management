@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Bell } from 'lucide-react';
 import BorrowTable from '../components/BorrowTable';
 import BorrowForm from '../components/BorrowForm';
 import Modal from '../../../components/common/Modal/Modal';
@@ -19,6 +20,21 @@ function sortById(data) {
   }
 
   return [...data].sort((a, b) => Number(a.id) - Number(b.id));
+}
+
+function sortByBorrowDateDescending(data) {
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return [...data].sort((a, b) => {
+    const timeA = a.borrowDate ? new Date(a.borrowDate).getTime() : 0;
+    const timeB = b.borrowDate ? new Date(b.borrowDate).getTime() : 0;
+    if (timeA !== timeB) {
+      return timeB - timeA;
+    }
+    return Number(b.id || 0) - Number(a.id || 0);
+  });
 }
 
 function toDateInputValue(value) {
@@ -54,6 +70,7 @@ function BorrowRecordPage() {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBorrowRecord, setEditingBorrowRecord] = useState(null);
+  const [notifiedRecord, setNotifiedRecord] = useState(null);
 
   const loadBorrowRecords = useCallback(async (status = selectedStatus) => {
     try {
@@ -69,7 +86,7 @@ function BorrowRecordPage() {
           data = data.filter(r => r.status === status);
         }
       }
-      setBorrowRecords(sortById(data));
+      setBorrowRecords(sortByBorrowDateDescending(data));
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể tải danh sách phiếu mượn.'));
     } finally {
@@ -90,7 +107,7 @@ function BorrowRecordPage() {
             bookApi.getAll(),
           ]);
 
-          setBorrowRecords(sortById(recordData));
+          setBorrowRecords(sortByBorrowDateDescending(recordData));
           setUsers(sortById(userData));
           setBooks(sortById(bookData));
         } else {
@@ -99,7 +116,7 @@ function BorrowRecordPage() {
             bookApi.getAll(),
           ]);
 
-          setBorrowRecords(sortById(recordData));
+          setBorrowRecords(sortByBorrowDateDescending(recordData));
           setUsers([]);
           setBooks(sortById(bookData));
         }
@@ -227,6 +244,29 @@ function BorrowRecordPage() {
     }
   }
 
+  function handleNotify(rec) {
+    // Determine student username
+    const mappedUser = users.find(u => Number(u.id) === Number(rec.userId));
+    const studentUsername = rec.user?.username || mappedUser?.username || rec.userName || 'user';
+
+    const allNotifs = JSON.parse(localStorage.getItem('mock_notifications') || '[]');
+    const newNotification = {
+      id: Date.now(),
+      studentUsername: studentUsername,
+      title: 'Cảnh báo sách quá hạn!',
+      message: `Bạn đang mượn cuốn sách "${rec.bookTitle}" (phiếu mượn #${rec.id}) và đã quá hạn kể từ ngày ${rec.dueDateText}. Vui lòng mang sách trả hoặc gia hạn sớm.`,
+      date: new Date().toISOString(),
+      read: false
+    };
+
+    localStorage.setItem('mock_notifications', JSON.stringify([newNotification, ...allNotifs]));
+    
+    // Dispatch custom event to notify Header if active
+    window.dispatchEvent(new Event('mock_notifications_updated'));
+
+    setNotifiedRecord(rec);
+  }
+
   return (
     <section className="borrow-record-page">
       <div className="page-header page-header--space">
@@ -255,13 +295,54 @@ function BorrowRecordPage() {
       {successMessage && !isModalOpen && <p className="borrow-record-page__success">{successMessage}</p>}
       {error && !isModalOpen && <p className="borrow-record-page__error">{error}</p>}
 
-      <BorrowTable records={enriched} loading={loading} onEdit={openEdit} onReturn={handleReturn} onDelete={handleDelete} isAdmin={isAdmin} />
+      <BorrowTable 
+        records={enriched} 
+        loading={loading} 
+        onEdit={openEdit} 
+        onReturn={handleReturn} 
+        onDelete={handleDelete} 
+        onNotify={handleNotify} 
+        isAdmin={isAdmin} 
+      />
 
       <Modal title={editingBorrowRecord ? 'Sửa phiếu mượn' : 'Tạo phiếu mượn'} isOpen={isModalOpen} onClose={closeModal}>
         {successMessage && <p className="borrow-record-page__success borrow-record-page__success--modal">{successMessage}</p>}
         {error && <p className="borrow-record-page__error borrow-record-page__error--modal">{error}</p>}
         <BorrowForm initialData={editingBorrowRecord} onSave={handleSave} onCancel={closeModal} users={users} books={books} />
       </Modal>
+
+      {/* Overdue Notification Modal */}
+      {notifiedRecord && (
+        <Modal 
+          title="Gửi thông báo nhắc nhở" 
+          isOpen={!!notifiedRecord} 
+          onClose={() => setNotifiedRecord(null)}
+        >
+          <div className="borrow-info-modal">
+            <div className="borrow-info-modal__icon" style={{ background: 'var(--color-warning-soft)', color: 'var(--color-warning)' }}>
+              <Bell size={36} />
+            </div>
+            <h3 className="borrow-info-modal__title">Thông báo quá hạn:</h3>
+            <p className="borrow-info-modal__book" style={{ color: 'var(--color-danger)' }}>
+              Gửi sinh viên: {notifiedRecord.userName}
+            </p>
+            <div className="borrow-info-modal__divider" />
+            <div className="borrow-info-modal__msg" style={{ textAlign: 'left', background: 'var(--color-background-light)', padding: '14px', borderRadius: 'var(--radius-md)', fontStyle: 'italic', marginBottom: 'var(--space-4)', width: '100%', boxSizing: 'border-box' }}>
+              Chào <strong>{notifiedRecord.userName}</strong>,<br/><br/>
+              Bạn đang mượn cuốn sách <strong>{notifiedRecord.bookTitle}</strong> (phiếu mượn #{notifiedRecord.id}) và đã quá hạn kể từ ngày <strong>{notifiedRecord.dueDateText}</strong>.<br/><br/>
+              Vui lòng mang sách đến quầy thủ thư để trả hoặc gia hạn trong thời gian sớm nhất.
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--color-success)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px', margin: '0 0 var(--space-4) 0' }}>
+              <span style={{ fontSize: '16px' }}>✓</span> Đã gửi thông báo nhắc nhở thành công!
+            </p>
+            <div className="borrow-info-modal__actions">
+              <Button variant="primary" onClick={() => setNotifiedRecord(null)}>
+                Đóng
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </section>
   );
 }

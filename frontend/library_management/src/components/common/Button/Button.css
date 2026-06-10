@@ -52,6 +52,15 @@
   background: #15803d;
 }
 
+.button--warning {
+  background: var(--color-warning);
+  color: #fff;
+}
+
+.button--warning:hover {
+  background: #d97706;
+}
+
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
