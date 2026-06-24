@@ -8,7 +8,7 @@ const columns = [
   { key: 'description', label: 'Mô tả' },
 ];
 
-function CategoryTable({ categories = [], loading = false, onEdit, onDelete, isAdmin }) {
+function CategoryTable({ categories = [], loading = false, onEdit, onDelete, isAdmin, highlightedId }) {
   function renderActions(row) {
     return (
       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
@@ -30,7 +30,7 @@ function CategoryTable({ categories = [], loading = false, onEdit, onDelete, isA
     );
   }
 
-  return <Table columns={columns} data={categories} renderActions={isAdmin ? renderActions : undefined} />;
+  return <Table columns={columns} data={categories} renderActions={isAdmin ? renderActions : undefined} highlightedId={highlightedId} />;
 }
 
 export default CategoryTable;

@@ -121,3 +121,23 @@ tr:last-child td {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Hiệu ứng highlight dòng/thẻ khi vừa thêm hoặc cập nhật thành công */
+@keyframes itemHighlightFade {
+  0% { 
+    background-color: rgba(59, 130, 246, 0.18) !important;
+    box-shadow: inset 4px 0 0 0 var(--color-primary, #3b82f6) !important;
+  }
+  70% {
+    background-color: rgba(59, 130, 246, 0.05) !important;
+    box-shadow: inset 4px 0 0 0 var(--color-primary, #3b82f6) !important;
+  }
+  100% { 
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.highlight-saved-item {
+  animation: itemHighlightFade 3.5s ease-out forwards;
+}

@@ -28,6 +28,7 @@ function AuthorPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [highlightedId, setHighlightedId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAuthor, setEditingAuthor] = useState(null);
@@ -48,6 +49,35 @@ function AuthorPage() {
   useEffect(() => {
     loadAuthors();
   }, [loadAuthors]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (highlightedId) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`item-row-${highlightedId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      
+      const clearTimer = setTimeout(() => {
+        setHighlightedId(null);
+      }, 3500);
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(clearTimer);
+      };
+    }
+  }, [highlightedId]);
 
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -83,12 +113,16 @@ function AuthorPage() {
         setSuccessMessage(response?.message || 'Cập nhật tác giả thành công');
 
         if (response?.updated) {
+          setHighlightedId(editingAuthor.id);
           closeModal();
           await loadAuthors();
         }
       } else {
-        await authorApi.create(authorData);
+        const response = await authorApi.create(authorData);
         setSuccessMessage('Thêm tác giả thành công');
+        if (response?.id) {
+          setHighlightedId(response.id);
+        }
         closeModal();
         await loadAuthors();
       }
@@ -106,6 +140,7 @@ function AuthorPage() {
     try {
       setError('');
       await authorApi.delete(author.id);
+      setSuccessMessage('Xóa tác giả thành công');
       await loadAuthors();
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể xóa tác giả.'));
@@ -145,6 +180,7 @@ function AuthorPage() {
         onEdit={openEdit}
         onDelete={handleDelete}
         isAdmin={isAdmin}
+        highlightedId={highlightedId}
       />
 
       <Modal title={editingAuthor ? 'Sửa tác giả' : 'Thêm tác giả'} isOpen={isModalOpen} onClose={closeModal}>

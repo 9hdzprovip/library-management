@@ -34,6 +34,7 @@ function BookPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [highlightedId, setHighlightedId] = useState(null);
   const [searchTitle, setSearchTitle] = useState('');
   const [selectedAuthorId, setSelectedAuthorId] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState('');
@@ -95,6 +96,35 @@ function BookPage() {
     loadInitialData();
   }, []);
 
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (highlightedId) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`item-row-${highlightedId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      
+      const clearTimer = setTimeout(() => {
+        setHighlightedId(null);
+      }, 3500);
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(clearTimer);
+      };
+    }
+  }, [highlightedId]);
+
   const enriched = useMemo(() => {
     return books.map((b) => ({
       ...b,
@@ -146,12 +176,16 @@ function BookPage() {
         setSuccessMessage(response?.message || 'Cập nhật sách thành công');
 
         if (response?.updated) {
+          setHighlightedId(editingBook.id);
           closeModal();
           await loadBooks();
         }
       } else {
-        await bookApi.create(payload);
+        const response = await bookApi.create(payload);
         setSuccessMessage('Thêm sách thành công');
+        if (response?.id) {
+          setHighlightedId(response.id);
+        }
         closeModal();
         await loadBooks();
       }
@@ -169,6 +203,7 @@ function BookPage() {
     try {
       setError('');
       await bookApi.delete(book.id);
+      setSuccessMessage('Xóa sách thành công');
       await loadBooks();
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể xóa sách.'));
@@ -225,6 +260,7 @@ function BookPage() {
           onViewDetails={setDetailedBook}
           onBorrow={setBorrowingBook}
           isAdmin={isAdmin} 
+          highlightedId={highlightedId}
         />
       ) : (
         <BookGrid 
@@ -235,6 +271,7 @@ function BookPage() {
           onViewDetails={setDetailedBook}
           onBorrow={setBorrowingBook}
           isAdmin={isAdmin} 
+          highlightedId={highlightedId}
         />
       )}
 

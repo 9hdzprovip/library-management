@@ -14,7 +14,7 @@ const columns = [
   { key: 'categoryName', label: 'Danh mục' },
 ];
 
-function BookTable({ books = [], loading = false, onEdit, onDelete, onViewDetails, onBorrow, isAdmin }) {
+function BookTable({ books = [], loading = false, onEdit, onDelete, onViewDetails, onBorrow, isAdmin, highlightedId }) {
   function renderActions(row) {
     if (isAdmin) {
       return (
@@ -52,7 +52,7 @@ function BookTable({ books = [], loading = false, onEdit, onDelete, onViewDetail
     );
   }
 
-  return <Table columns={columns} data={books} renderActions={renderActions} />;
+  return <Table columns={columns} data={books} renderActions={renderActions} highlightedId={highlightedId} />;
 }
 
 export default BookTable;

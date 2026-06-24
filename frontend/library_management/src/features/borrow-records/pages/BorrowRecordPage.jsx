@@ -68,6 +68,7 @@ function BorrowRecordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [highlightedId, setHighlightedId] = useState(null);
   const [selectedStatus, setSelectedStatus] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBorrowRecord, setEditingBorrowRecord] = useState(null);
@@ -130,6 +131,35 @@ function BorrowRecordPage() {
 
     loadInitialData();
   }, [isAdmin]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (highlightedId) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`item-row-${highlightedId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      
+      const clearTimer = setTimeout(() => {
+        setHighlightedId(null);
+      }, 3500);
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(clearTimer);
+      };
+    }
+  }, [highlightedId]);
 
   const enriched = useMemo(() => {
     return borrowRecords.map((record) => {
@@ -195,6 +225,7 @@ function BorrowRecordPage() {
         setSuccessMessage(response?.message || 'Cập nhật phiếu mượn thành công');
 
         if (response?.updated) {
+          setHighlightedId(editingBorrowRecord.id);
           closeModal();
           await loadBorrowRecords(selectedStatus);
         }
@@ -205,8 +236,11 @@ function BorrowRecordPage() {
           dueDate: payload.dueDate,
         };
 
-        await borrowApi.borrowBook(createPayload);
+        const response = await borrowApi.borrowBook(createPayload);
         setSuccessMessage('Tạo phiếu mượn thành công');
+        if (response?.id) {
+          setHighlightedId(response.id);
+        }
         closeModal();
         await loadBorrowRecords(selectedStatus);
       }
@@ -239,6 +273,7 @@ function BorrowRecordPage() {
     try {
       setError('');
       await borrowApi.delete(rec.id);
+      setSuccessMessage('Xóa phiếu mượn thành công');
       await loadBorrowRecords(selectedStatus);
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể xóa phiếu mượn.'));
@@ -265,8 +300,6 @@ function BorrowRecordPage() {
       };
 
       setNotifiedRecord(modalData);
-      setSuccessMessage('Gửi thông báo nhắc nhở thành công!');
-      setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể gửi thông báo nhắc nhở.'));
     }
@@ -308,6 +341,7 @@ function BorrowRecordPage() {
         onDelete={handleDelete} 
         onNotify={handleNotify} 
         isAdmin={isAdmin} 
+        highlightedId={highlightedId}
       />
 
       <Modal title={editingBorrowRecord ? 'Sửa phiếu mượn' : 'Tạo phiếu mượn'} isOpen={isModalOpen} onClose={closeModal}>

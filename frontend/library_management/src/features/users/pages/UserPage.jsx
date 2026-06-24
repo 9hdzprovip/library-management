@@ -25,6 +25,7 @@ function UserPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [highlightedId, setHighlightedId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -45,6 +46,35 @@ function UserPage() {
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (highlightedId) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`item-row-${highlightedId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      
+      const clearTimer = setTimeout(() => {
+        setHighlightedId(null);
+      }, 3500);
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(clearTimer);
+      };
+    }
+  }, [highlightedId]);
 
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -80,12 +110,16 @@ function UserPage() {
         setSuccessMessage(response?.message || 'Cập nhật người dùng thành công');
 
         if (response?.updated) {
+          setHighlightedId(editingUser.id);
           closeModal();
           await loadUsers();
         }
       } else {
-        await userApi.create(payload);
+        const response = await userApi.create(payload);
         setSuccessMessage('Thêm người dùng thành công');
+        if (response?.id) {
+          setHighlightedId(response.id);
+        }
         closeModal();
         await loadUsers();
       }
@@ -103,6 +137,7 @@ function UserPage() {
     try {
       setError('');
       await userApi.delete(user.id);
+      setSuccessMessage('Xóa người dùng thành công');
       await loadUsers();
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể xóa người dùng.'));
@@ -134,7 +169,7 @@ function UserPage() {
       {successMessage && !isModalOpen && <p className="user-page__success">{successMessage}</p>}
       {error && !isModalOpen && <p className="user-page__error">{error}</p>}
 
-      <UserTable users={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} />
+      <UserTable users={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} highlightedId={highlightedId} />
 
       <Modal title={editingUser ? 'Sửa người dùng' : 'Thêm người dùng'} isOpen={isModalOpen} onClose={closeModal}>
         {successMessage && <p className="user-page__success user-page__success--modal">{successMessage}</p>}

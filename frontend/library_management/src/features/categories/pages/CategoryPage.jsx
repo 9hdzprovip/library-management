@@ -28,6 +28,7 @@ function CategoryPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [highlightedId, setHighlightedId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
@@ -48,6 +49,35 @@ function CategoryPage() {
   useEffect(() => {
     loadCategories();
   }, [loadCategories]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (highlightedId) {
+      const timer = setTimeout(() => {
+        const element = document.getElementById(`item-row-${highlightedId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      
+      const clearTimer = setTimeout(() => {
+        setHighlightedId(null);
+      }, 3500);
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(clearTimer);
+      };
+    }
+  }, [highlightedId]);
 
   const filtered = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
@@ -83,12 +113,16 @@ function CategoryPage() {
         setSuccessMessage(response?.message || 'Cập nhật danh mục thành công');
 
         if (response?.updated) {
+          setHighlightedId(editingCategory.id);
           closeModal();
           await loadCategories();
         }
       } else {
-        await categoryApi.create(data);
+        const response = await categoryApi.create(data);
         setSuccessMessage('Thêm danh mục thành công');
+        if (response?.id) {
+          setHighlightedId(response.id);
+        }
         closeModal();
         await loadCategories();
       }
@@ -106,6 +140,7 @@ function CategoryPage() {
     try {
       setError('');
       await categoryApi.delete(item.id);
+      setSuccessMessage('Xóa danh mục thành công');
       await loadCategories();
     } catch (err) {
       setError(getErrorMessage(err, 'Không thể xóa danh mục.'));
@@ -139,7 +174,7 @@ function CategoryPage() {
       {successMessage && !isModalOpen && <p className="category-page__success">{successMessage}</p>}
       {error && !isModalOpen && <p className="category-page__error">{error}</p>}
 
-      <CategoryTable categories={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} isAdmin={isAdmin} />
+      <CategoryTable categories={filtered} loading={loading} onEdit={openEdit} onDelete={handleDelete} isAdmin={isAdmin} highlightedId={highlightedId} />
 
       <Modal title={editingCategory ? 'Sửa danh mục' : 'Thêm danh mục'} isOpen={isModalOpen} onClose={closeModal}>
         {successMessage && <p className="category-page__success category-page__success--modal">{successMessage}</p>}

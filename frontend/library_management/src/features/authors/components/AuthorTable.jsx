@@ -8,7 +8,7 @@ const columns = [
   { key: 'biography', label: 'Tiểu sử' },
 ];
 
-function AuthorTable({ authors = [], loading = false, onEdit, onDelete, isAdmin }) {
+function AuthorTable({ authors = [], loading = false, onEdit, onDelete, isAdmin, highlightedId }) {
   function renderActions(row) {
     return (
       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
@@ -30,7 +30,7 @@ function AuthorTable({ authors = [], loading = false, onEdit, onDelete, isAdmin 
     );
   }
 
-  return <Table columns={columns} data={authors} renderActions={isAdmin ? renderActions : undefined} />;
+  return <Table columns={columns} data={authors} renderActions={isAdmin ? renderActions : undefined} highlightedId={highlightedId} />;
 }
 
 export default AuthorTable;

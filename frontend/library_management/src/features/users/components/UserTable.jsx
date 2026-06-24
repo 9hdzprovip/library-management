@@ -21,7 +21,7 @@ const columns = [
   },
 ];
 
-function UserTable({ users = [], loading = false, onEdit, onDelete }) {
+function UserTable({ users = [], loading = false, onEdit, onDelete, highlightedId }) {
   function renderActions(row) {
     return (
       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
@@ -43,7 +43,7 @@ function UserTable({ users = [], loading = false, onEdit, onDelete }) {
     );
   }
 
-  return <Table columns={columns} data={users} renderActions={renderActions} />;
+  return <Table columns={columns} data={users} renderActions={renderActions} highlightedId={highlightedId} />;
 }
 
 export default UserTable;

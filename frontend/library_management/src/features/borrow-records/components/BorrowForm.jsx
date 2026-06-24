@@ -2,20 +2,76 @@ import { useEffect, useState } from 'react';
 import Button from '../../../components/common/Button/Button';
 import Input from '../../../components/common/Input/Input';
 
-function toDateInputValue(value) {
-  if (!value) {
-    return '';
-  }
-
-  return String(value).slice(0, 10);
-}
-
 function getLocalDateString() {
   const d = new Date();
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+// Tự động định dạng khi người dùng nhập dd/mm/yyyy
+function formatDateInput(value) {
+  // Giữ lại chỉ các chữ số
+  const digits = value.replace(/\D/g, '');
+  
+  if (digits.length === 0) return '';
+  
+  let formatted = '';
+  if (digits.length <= 2) {
+    formatted = digits;
+  } else if (digits.length <= 4) {
+    formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  } else {
+    formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+  }
+  return formatted;
+}
+
+// Kiểm tra tính hợp lệ của ngày dạng dd/mm/yyyy
+function isValidDate(dateStr) {
+  if (!dateStr) return true;
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return false;
+  const day = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const year = parseInt(parts[2], 10);
+  
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return false;
+  if (year < 1000 || year > 9999) return false;
+  if (month < 1 || month > 12) return false;
+  
+  const daysInMonth = new Date(year, month, 0).getDate();
+  if (day < 1 || day > daysInMonth) return false;
+  
+  return true;
+}
+
+// Chuyển đổi dd/mm/yyyy -> yyyy-mm-dd
+function ddmmyyyyToYyyymmdd(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('/');
+  if (parts.length === 3) {
+    const day = parts[0].padStart(2, '0');
+    const month = parts[1].padStart(2, '0');
+    const year = parts[2];
+    if (day.length === 2 && month.length === 2 && year.length === 4) {
+      return `${year}-${month}-${day}`;
+    }
+  }
+  return '';
+}
+
+// Chuyển đổi yyyy-mm-dd (hoặc ISO string) -> dd/mm/yyyy
+function yyyymmddToDdmmyyyy(dateStr) {
+  if (!dateStr) return '';
+  const cleanStr = String(dateStr).slice(0, 10);
+  const parts = cleanStr.split('-');
+  if (parts.length === 3) {
+    const [year, month, day] = parts;
+    return `${day}/${month}/${year}`;
+  }
+  return '';
 }
 
 function BorrowForm({ initialData = null, onSave, onCancel, users = [], books = [] }) {
@@ -34,14 +90,14 @@ function BorrowForm({ initialData = null, onSave, onCancel, users = [], books = 
     if (initialData) {
       setUserId(String(initialData.userId ?? initialData.user?.id ?? ''));
       setBookId(String(initialData.bookId ?? initialData.book?.id ?? ''));
-      setBorrowDate(toDateInputValue(initialData.borrowDate));
-      setDueDate(toDateInputValue(initialData.dueDate));
-      setReturnDate(toDateInputValue(initialData.returnDate));
+      setBorrowDate(yyyymmddToDdmmyyyy(initialData.borrowDate));
+      setDueDate(yyyymmddToDdmmyyyy(initialData.dueDate));
+      setReturnDate(yyyymmddToDdmmyyyy(initialData.returnDate));
       setStatus(initialData.status ?? 'BORROWED');
     } else {
       setUserId('');
       setBookId('');
-      setBorrowDate(getLocalDateString());
+      setBorrowDate(yyyymmddToDdmmyyyy(getLocalDateString()));
       setDueDate('');
       setReturnDate('');
       setStatus('BORROWED');
@@ -77,26 +133,52 @@ function BorrowForm({ initialData = null, onSave, onCancel, users = [], books = 
     if (!userId) return setError('Vui lòng chọn người dùng');
     if (!bookId) return setError('Vui lòng chọn sách');
     if (!isEditing && !dueDate) return setError('Ngày đến hạn là bắt buộc');
-    if (dueDate && Number.isNaN(new Date(dueDate).getTime())) return setError('Ngày đến hạn không hợp lệ');
-    if (returnDate && Number.isNaN(new Date(returnDate).getTime())) return setError('Ngày trả không hợp lệ');
 
-    if (dueDate && borrowDate) {
-      const dDate = new Date(dueDate).setHours(0, 0, 0, 0);
-      const bDate = new Date(borrowDate).setHours(0, 0, 0, 0);
+    // Kiểm tra định dạng/tính hợp lệ ngày tháng dd/mm/yyyy
+    if (borrowDate && !isValidDate(borrowDate)) {
+      return setError('Ngày mượn không hợp lệ hoặc không đúng định dạng dd/mm/yyyy');
+    }
+    if (dueDate && !isValidDate(dueDate)) {
+      return setError('Ngày đến hạn không hợp lệ hoặc không đúng định dạng dd/mm/yyyy');
+    }
+    if (returnDate && !isValidDate(returnDate)) {
+      return setError('Ngày trả không hợp lệ hoặc không đúng định dạng dd/mm/yyyy');
+    }
+
+    const dbBorrowDate = ddmmyyyyToYyyymmdd(borrowDate);
+    const dbDueDate = ddmmyyyyToYyyymmdd(dueDate);
+    const dbReturnDate = ddmmyyyyToYyyymmdd(returnDate);
+
+    // Kiểm tra việc chuyển đổi có thành công không
+    if (borrowDate && !dbBorrowDate) {
+      return setError('Ngày mượn không đúng định dạng dd/mm/yyyy');
+    }
+    if (dueDate && !dbDueDate) {
+      return setError('Ngày đến hạn không đúng định dạng dd/mm/yyyy');
+    }
+    if (returnDate && !dbReturnDate) {
+      return setError('Ngày trả không đúng định dạng dd/mm/yyyy');
+    }
+
+    if (dbDueDate && dbBorrowDate) {
+      const dDate = new Date(dbDueDate).setHours(0, 0, 0, 0);
+      const bDate = new Date(dbBorrowDate).setHours(0, 0, 0, 0);
       if (dDate < bDate) {
         return setError('Ngày đến hạn không được trước ngày mượn');
       }
     }
 
-    if (status === 'RETURNED' && !returnDate) return setError('Khi trạng thái là RETURNED, cần nhập ngày trả');
+    if (status === 'RETURNED' && !returnDate) {
+      return setError('Khi trạng thái là RETURNED, cần nhập ngày trả');
+    }
 
     setError('');
     onSave({
       userId: Number(userId),
       bookId: Number(bookId),
-      borrowDate: borrowDate || null,
-      dueDate: dueDate || null,
-      returnDate: returnDate || null,
+      borrowDate: dbBorrowDate || null,
+      dueDate: dbDueDate || null,
+      returnDate: dbReturnDate || null,
       status,
     });
   }
@@ -142,16 +224,43 @@ function BorrowForm({ initialData = null, onSave, onCancel, users = [], books = 
       </div>
 
       {isEditing ? (
-        <Input label="Ngày mượn" name="borrowDate" type="date" value={borrowDate} onChange={(e) => setBorrowDate(e.target.value)} />
+        <Input
+          label="Ngày mượn (dd/mm/yyyy)"
+          name="borrowDate"
+          type="text"
+          placeholder="dd/mm/yyyy"
+          value={borrowDate}
+          onChange={(e) => setBorrowDate(formatDateInput(e.target.value))}
+        />
       ) : (
-        <Input label="Ngày mượn (Tự động)" name="borrowDate" type="date" value={borrowDate} disabled />
+        <Input
+          label="Ngày mượn (Tự động - dd/mm/yyyy)"
+          name="borrowDate"
+          type="text"
+          value={borrowDate}
+          disabled
+        />
       )}
 
-      <Input label="Ngày đến hạn" name="dueDate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+      <Input
+        label="Ngày đến hạn (dd/mm/yyyy)"
+        name="dueDate"
+        type="text"
+        placeholder="dd/mm/yyyy"
+        value={dueDate}
+        onChange={(e) => setDueDate(formatDateInput(e.target.value))}
+      />
 
       {isEditing && (
         <>
-          <Input label="Ngày trả" name="returnDate" type="date" value={returnDate} onChange={(e) => setReturnDate(e.target.value)} />
+          <Input
+            label="Ngày trả (dd/mm/yyyy)"
+            name="returnDate"
+            type="text"
+            placeholder="dd/mm/yyyy"
+            value={returnDate}
+            onChange={(e) => setReturnDate(formatDateInput(e.target.value))}
+          />
           <label>Trạng thái</label>
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="BORROWED">BORROWED</option>

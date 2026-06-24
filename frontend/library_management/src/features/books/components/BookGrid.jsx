@@ -2,7 +2,7 @@ import { Edit2, Trash2, Layers, Eye, BookOpen } from 'lucide-react';
 import Button from '../../../components/common/Button/Button';
 import bookImage from '../../../assets/images/books.png';
 
-function BookGrid({ books = [], loading = false, onEdit, onDelete, onViewDetails, onBorrow, isAdmin }) {
+function BookGrid({ books = [], loading = false, onEdit, onDelete, onViewDetails, onBorrow, isAdmin, highlightedId }) {
   if (loading) {
     return (
       <div className="book-grid__loading">
@@ -25,7 +25,11 @@ function BookGrid({ books = [], loading = false, onEdit, onDelete, onViewDetails
         const available = book.availableQuantity || 0;
 
         return (
-          <div key={book.id} className="book-card-alt">
+          <div 
+            key={book.id} 
+            id={`item-row-${book.id}`}
+            className={`book-card-alt ${book.id === highlightedId ? 'highlight-saved-item' : ''}`}
+          >
             {/* Clickable Card Body to view detail */}
             <div 
               className="book-card-alt__main-click" 

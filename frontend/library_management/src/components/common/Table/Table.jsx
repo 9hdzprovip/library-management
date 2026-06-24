@@ -1,6 +1,6 @@
 import './Table.css';
 
-function Table({ columns = [], data = [], renderActions }) {
+function Table({ columns = [], data = [], renderActions, highlightedId }) {
   return (
     <div className="table-wrap">
       <table className="table">
@@ -15,7 +15,11 @@ function Table({ columns = [], data = [], renderActions }) {
         <tbody>
           {data.length > 0 ? (
             data.map((row, index) => (
-              <tr key={row.id ?? index}>
+              <tr 
+                key={row.id ?? index}
+                id={row.id ? `item-row-${row.id}` : undefined}
+                className={row.id === highlightedId ? 'highlight-saved-item' : ''}
+              >
                 {columns.map((column) => (
                   <td key={column.key}>
                     {column.render ? column.render(row[column.key], row, index) : row[column.key]}

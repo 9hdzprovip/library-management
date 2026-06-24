@@ -32,7 +32,7 @@ const columns = [
   },
 ];
 
-function BorrowTable({ records = [], loading = false, onEdit, onReturn, onDelete, onNotify, isAdmin }) {
+function BorrowTable({ records = [], loading = false, onEdit, onReturn, onDelete, onNotify, isAdmin, highlightedId }) {
   function renderActions(row) {
     return (
       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
@@ -60,7 +60,7 @@ function BorrowTable({ records = [], loading = false, onEdit, onReturn, onDelete
     return <p className="borrow-table__loading">Đang tải danh sách phiếu mượn...</p>;
   }
 
-  return <Table columns={columns} data={records} renderActions={isAdmin ? renderActions : undefined} />;
+  return <Table columns={columns} data={records} renderActions={isAdmin ? renderActions : undefined} highlightedId={highlightedId} />;
 }
 
 export default BorrowTable;
