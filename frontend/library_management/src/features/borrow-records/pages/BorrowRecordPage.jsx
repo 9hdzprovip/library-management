@@ -7,6 +7,7 @@ import Button from '../../../components/common/Button/Button';
 import * as borrowApi from '../../../api/borrowRecordApi';
 import * as userApi from '../../../api/userApi';
 import * as bookApi from '../../../api/bookApi';
+import * as notificationApi from '../../../api/notificationApi';
 import { formatDate } from '../../../utils/formatDate';
 import '../styles/borrowRecord.css';
 
@@ -244,27 +245,31 @@ function BorrowRecordPage() {
     }
   }
 
-  function handleNotify(rec) {
-    // Determine student username
-    const mappedUser = users.find(u => Number(u.id) === Number(rec.userId));
-    const studentUsername = rec.user?.username || mappedUser?.username || rec.userName || 'user';
+  async function handleNotify(rec) {
+    try {
+      setError('');
+      const payload = {
+        userId: Number(rec.userId),
+        title: 'Cảnh báo sách quá hạn!',
+        message: `Bạn đang mượn cuốn sách "${rec.bookTitle}" (phiếu mượn #${rec.id}) và đã quá hạn kể từ ngày ${rec.dueDateText}. Vui lòng mang sách trả hoặc gia hạn sớm.`,
+      };
 
-    const allNotifs = JSON.parse(localStorage.getItem('mock_notifications') || '[]');
-    const newNotification = {
-      id: Date.now(),
-      studentUsername: studentUsername,
-      title: 'Cảnh báo sách quá hạn!',
-      message: `Bạn đang mượn cuốn sách "${rec.bookTitle}" (phiếu mượn #${rec.id}) và đã quá hạn kể từ ngày ${rec.dueDateText}. Vui lòng mang sách trả hoặc gia hạn sớm.`,
-      date: new Date().toISOString(),
-      read: false
-    };
+      const response = await notificationApi.create(payload);
+      
+      // Enrich response data for preview modal
+      const modalData = {
+        ...response,
+        userName: rec.userName,
+        bookTitle: rec.bookTitle,
+        dueDateText: rec.dueDateText
+      };
 
-    localStorage.setItem('mock_notifications', JSON.stringify([newNotification, ...allNotifs]));
-    
-    // Dispatch custom event to notify Header if active
-    window.dispatchEvent(new Event('mock_notifications_updated'));
-
-    setNotifiedRecord(rec);
+      setNotifiedRecord(modalData);
+      setSuccessMessage('Gửi thông báo nhắc nhở thành công!');
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      setError(getErrorMessage(err, 'Không thể gửi thông báo nhắc nhở.'));
+    }
   }
 
   return (

@@ -1,6 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Bell } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
+import * as notificationApi from '../../../api/notificationApi';
+import * as borrowApi from '../../../api/borrowRecordApi';
+import Modal from '../../common/Modal/Modal';
+import Button from '../../common/Button/Button';
 import './Header.css';
 
 function Header() {
@@ -11,13 +15,19 @@ function Header() {
 
   const [notifications, setNotifications] = useState([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [returnedBookTitle, setReturnedBookTitle] = useState('');
   const dropdownRef = useRef(null);
 
-  const loadNotifications = () => {
-    const allNotifs = JSON.parse(localStorage.getItem('mock_notifications') || '[]');
-    // Filter by logged-in user's username
-    const myNotifs = allNotifs.filter((n) => n.studentUsername?.toLowerCase() === username.toLowerCase());
-    setNotifications(myNotifs);
+  const loadNotifications = async () => {
+    try {
+      if (role.toUpperCase() !== 'ADMIN') {
+        const data = await notificationApi.getMyNotifications();
+        setNotifications(data);
+      }
+    } catch (err) {
+      console.error("Không thể tải thông báo từ backend:", err);
+    }
   };
 
   useEffect(() => {
@@ -28,6 +38,7 @@ function Header() {
     };
 
     window.addEventListener('mock_notifications_updated', handleUpdate);
+    window.addEventListener('notifications_updated', handleUpdate);
 
     // Close dropdown on outside click
     const handleOutsideClick = (event) => {
@@ -39,35 +50,58 @@ function Header() {
 
     return () => {
       window.removeEventListener('mock_notifications_updated', handleUpdate);
+      window.removeEventListener('notifications_updated', handleUpdate);
       document.removeEventListener('mousedown', handleOutsideClick);
     };
-  }, [username]);
+  }, [username, role]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const handleMarkAllAsRead = (e) => {
+  const handleMarkAllAsRead = async (e) => {
     e.stopPropagation();
-    const allNotifs = JSON.parse(localStorage.getItem('mock_notifications') || '[]');
-    const updated = allNotifs.map((n) => {
-      if (n.studentUsername?.toLowerCase() === username.toLowerCase()) {
-        return { ...n, read: true };
+    try {
+      const unreadNotifs = notifications.filter((n) => !n.read);
+      if (unreadNotifs.length > 0) {
+        await Promise.all(unreadNotifs.map((n) => notificationApi.markAsRead(n.id)));
+        loadNotifications();
       }
-      return n;
-    });
-    localStorage.setItem('mock_notifications', JSON.stringify(updated));
-    loadNotifications();
+    } catch (err) {
+      console.error("Không thể đánh dấu đọc tất cả thông báo:", err);
+    }
   };
 
-  const handleNotificationClick = (id) => {
-    const allNotifs = JSON.parse(localStorage.getItem('mock_notifications') || '[]');
-    const updated = allNotifs.map((n) => {
-      if (n.id === id) {
-        return { ...n, read: true };
+  const handleNotificationClick = async (item) => {
+    try {
+      if (!item.read) {
+        await notificationApi.markAsRead(item.id);
+        loadNotifications();
       }
-      return n;
-    });
-    localStorage.setItem('mock_notifications', JSON.stringify(updated));
-    loadNotifications();
+
+      // Check if the book has been returned by parsing the borrow record ID from the message
+      const match = item.message.match(/phiếu mượn #(\d+)/);
+      if (match) {
+        const borrowRecordId = Number(match[1]);
+        try {
+          const records = await borrowApi.getMyRecords();
+          const record = records.find((r) => Number(r.id) === borrowRecordId);
+          if (record && record.status === 'RETURNED') {
+            setReturnedBookTitle(record.bookTitle || 'cuốn sách này');
+            setShowReturnModal(true);
+            setIsDropdownOpen(false);
+            return;
+          }
+        } catch (apiErr) {
+          console.error("Không thể kiểm tra trạng thái trả sách:", apiErr);
+        }
+      }
+
+      setIsDropdownOpen(false);
+      navigate('/borrow-records');
+    } catch (err) {
+      console.error("Không thể xử lý click thông báo:", err);
+      setIsDropdownOpen(false);
+      navigate('/borrow-records');
+    }
   };
 
   function handleLogout() {
@@ -129,7 +163,7 @@ function Header() {
                       <div 
                         key={item.id} 
                         className={`header__notification-item ${!item.read ? 'header__notification-item--unread' : ''}`}
-                        onClick={() => handleNotificationClick(item.id)}
+                        onClick={() => handleNotificationClick(item)}
                       >
                         <span className="header__notification-title">{item.title}</span>
                         <p className="header__notification-msg">{item.message}</p>
@@ -160,6 +194,30 @@ function Header() {
           <span>Đăng xuất</span>
         </button>
       </div>
+
+      {showReturnModal && (
+        <Modal 
+          title="Thông báo hệ thống" 
+          isOpen={showReturnModal} 
+          onClose={() => setShowReturnModal(false)}
+        >
+          <div className="header__returned-modal">
+            <div className="header__returned-modal-icon">
+              <span style={{ fontSize: '32px', fontWeight: 'bold' }}>✓</span>
+            </div>
+            <h3 className="header__returned-modal-title">Đã trả sách thành công</h3>
+            <div className="header__returned-modal-divider" />
+            <p className="header__returned-modal-msg">
+              Bạn đã hoàn tất việc trả cuốn sách <strong>"{returnedBookTitle}"</strong> cho thư viện. Trạng thái phiếu mượn hiện tại là đã trả sách.
+            </p>
+            <div className="header__returned-modal-actions">
+              <Button variant="primary" onClick={() => setShowReturnModal(false)}>
+                Đồng ý
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </header>
   );
 }

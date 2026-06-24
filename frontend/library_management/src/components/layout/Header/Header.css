@@ -283,3 +283,62 @@
   color: var(--color-muted);
   font-size: 13px;
 }
+
+/* === RETURNED BOOK MODAL === */
+.header__returned-modal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-4) var(--space-2) var(--space-2);
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.header__returned-modal-icon {
+  width: 72px;
+  height: 72px;
+  background: var(--color-success-soft);
+  color: var(--color-success);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-4);
+}
+
+.header__returned-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 6px 0;
+}
+
+.header__returned-modal-divider {
+  width: 50px;
+  height: 2px;
+  background: var(--color-border);
+  margin: var(--space-4) 0;
+}
+
+.header__returned-modal-msg {
+  font-size: 14px;
+  color: var(--color-muted);
+  line-height: 1.6;
+  margin: 0 0 var(--space-6) 0;
+}
+
+.header__returned-modal-msg strong {
+  color: var(--color-text);
+}
+
+.header__returned-modal-actions {
+  width: 100%;
+}
+
+.header__returned-modal-actions button {
+  width: 100%;
+  justify-content: center;
+  padding: 10px;
+  font-weight: 600;
+}
